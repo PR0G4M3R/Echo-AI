@@ -4,7 +4,6 @@ import os
 import random
 from itertools import cycle
 import asyncio
-from keep_alive import keep_alive
 from config import TOKEN
 from cogs.message_module import messageModule
 from cogs.member_module import memberModule, create_database
@@ -29,7 +28,6 @@ discord.Game(name='Crossout'),
 async def on_ready():
     create_database()
     print('Successfully logged in as {0.user}'.format(bot))
-    keep_alive(bot)
     await bot.add_cog(messageModule(bot))
     await bot.add_cog(memberModule(bot))
     await bot.add_cog(weatherModule(bot))
@@ -48,13 +46,4 @@ async def on_ready():
       random_delay = random.uniform(15, 600)  
       await asyncio.sleep(random_delay)
       
-    
-   
-@bot.command(brief='This command gives you a link to the dashboard.', name="dashboard", aliases=["dashboard_request"], extras={"category": "Helpful Commands"})
-async def dashboard_command(ctx):
-   await ctx.send("https://echo-ai--adriansurkovic.repl.co/")
-
-
-
-print ("keep_alive Activated")
 bot.run(TOKEN)

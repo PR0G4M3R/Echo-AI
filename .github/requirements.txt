@@ -1,8 +1,0 @@
-discord.py
-Flask
-pytz
-random2
-asyncio
-discord-py-menus
-datetime
-requests
