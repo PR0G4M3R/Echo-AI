@@ -1,18 +1,3 @@
-import subprocess
-
-def install_dependencies():
-    try:
-        subprocess.check_call(["pip", "install", "discord.py", "Flask", "pytz", "random2", "asyncio","menus", "datetime", "requests"])
-        print("Dependencies installed successfully.")
-    except subprocess.CalledProcessError:
-        print("Failed to install dependencies.")
-
-# Check if this script is being run as the main module
-if __name__ == "__main__":
-    install_dependencies()
-
-
-
 import discord
 from discord.ext import commands, tasks
 import os
