@@ -25,7 +25,6 @@ class HelpMenu(menus.ListPageSource):
         offset = (menu.current_page * self.per_page) + 1
         len_data = len(self.categories)
 
-
         embed = Embed(
             title="Help",
             description="What can I help you with?",
@@ -56,7 +55,7 @@ class HelpModule(commands.Cog):
         # Group commands into categories
         categories = {}
         for command in self.bot.commands:
-            category = command("category", "Other")
+            category = getattr(command.callback, "category", "Other")
             if category not in categories:
                 categories[category] = []
             categories[category].append(syntax(command))
