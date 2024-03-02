@@ -55,10 +55,7 @@ class Position:
 
     def __repr__(self):
         return f'<{self.__class__.__name__}: {self.number}>'
-
-_last = Last()
-_first = First()
-
+    
 _custom_emoji = re.compile(r'<?(?P<animated>a)?:?(?P<name>[A-Za-z0-9\_]+):(?P<id>[0-9]{13,20})>?')
 
 def _cast_emoji(obj):
@@ -512,24 +509,24 @@ class MenuPages(Menu):
         return max_pages <= 2
 
     @button('\N{BLACK LEFT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}\ufe0f',
-            position=First(0), skip_if=_skip_double_triangle_buttons)
+            position=(0), skip_if=_skip_double_triangle_buttons)
     async def go_to_first_page(self, payload):
         await self.show_page(0)
 
-    @button('\N{BLACK LEFT-POINTING TRIANGLE}\ufe0f', position=First(1))
+    @button('\N{BLACK LEFT-POINTING TRIANGLE}\ufe0f', position=(1))
     async def go_to_previous_page(self, payload):
         await self.show_checked_page(self.current_page - 1)
 
-    @button('\N{BLACK RIGHT-POINTING TRIANGLE}\ufe0f', position=Last(0))
+    @button('\N{BLACK RIGHT-POINTING TRIANGLE}\ufe0f', position=(0))
     async def go_to_next_page(self, payload):
         await self.show_checked_page(self.current_page + 1)
 
     @button('\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}\ufe0f',
-            position=Last(1), skip_if=_skip_double_triangle_buttons)
+            position=(1), skip_if=_skip_double_triangle_buttons)
     async def go_to_last_page(self, payload):
         await self.show_page(self._source.get_max_pages() - 1)
 
-    @button('\N{BLACK SQUARE FOR STOP}\ufe0f', position=Last(2))
+    @button('\N{BLACK SQUARE FOR STOP}\ufe0f', position=(2))
     async def stop_pages(self, payload):
         self.stop()
 
@@ -568,7 +565,7 @@ class GroupByPageSource(ListPageSource):
                 continue
             size = len(g)
 
-            nested.extend(_GroupByEntry(key=k, items=g[i:i+per_page]) for i in range(0, size, per_page))
+            nested.extend(GroupByPageSource(key=k, items=g[i:i+per_page]) for i in range(0, size, per_page))
 
         super().__init__(nested, per_page=1)
 
