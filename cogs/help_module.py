@@ -30,15 +30,21 @@ class HelpMenu(menus.ListPageSource):
             description="What can I help you with?",
             colour=self.ctx.author.colour
         )
-        
+
         embed.set_footer(text=f"{offset:,} - {min(len_data, offset + self.per_page - 1):,} of {len_data:,} commands.")
 
         for category in entries:
-            # Truncate value if too long
-            cmds_str = "\n\n\u200b".join(self.categories[category])[:1021] + "..." if len("\n\n\u200b".join(self.categories[category])) > 1024 else "\n\n\u200b".join(self.categories[category])
-            embed.add_field(name=f"\u200b{category}\u200b", value=f"\u200b\n{cmds_str}\n\u200b", inline=False)
+            # Split content into chunks if it's too long
+            cmds_str = "\n\n\u200b".join(self.categories[category])
+            chunks = [cmds_str[i:i + 1024] for i in range(0, len(cmds_str), 1024)]
+
+            for i, chunk in enumerate(chunks):
+                name = f"\u200b{category} (Part {i + 1})"
+                value = f"\u200b\n{chunk}\n\u200b"
+                embed.add_field(name=name, value=value, inline=False)
 
         return embed
+
 
 class HelpModule(commands.Cog):
     def __init__(self, bot):
