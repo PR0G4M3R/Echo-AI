@@ -11,7 +11,6 @@ from cogs.weather_module import weatherModule
 from cogs.channel_module import channelModule
 from cogs.help_module import HelpModule
 from cogs.moderation_module import ModerationModule
-from cogs.chatbot_module import chatbotModule
 from cogs.reminder_module import reminderModule
 from cogs.active import activeModule
 
@@ -34,7 +33,6 @@ async def on_ready():
     bot.add_cog(channelModule(bot))
     bot.add_cog(HelpModule(bot))
     bot.add_cog(ModerationModule(bot))
-    bot.add_cog(chatbotModule(bot))
     bot.add_cog(reminderModule(bot))
     bot.add_cog(activeModule(bot))
     await bot.change_presence(status=discord.Status.online, activity=discord.Game('Starting...'))

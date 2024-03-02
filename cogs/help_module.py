@@ -45,7 +45,7 @@ class HelpModule(commands.Cog):
         self.bot = bot
         self.bot.remove_command("help")
 
-    @commands.command(brief='This command displays this embed.', name="help", extras={"category": "Helpful Commands"})
+    @commands.command(brief='This command displays this embed.', name="help")
     async def show_help(self, ctx, cmd: Optional[str]):
         if cmd:
             command = self.bot.get_command(cmd)
