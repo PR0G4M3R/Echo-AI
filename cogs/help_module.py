@@ -71,5 +71,6 @@ class HelpModule(commands.Cog):
         menu = menus.MenuPages(source=HelpMenu(ctx, categories), clear_reactions_after=True)
         await menu.start(ctx)
 
+
 def setup(bot):
     bot.add_cog(HelpModule(bot))
