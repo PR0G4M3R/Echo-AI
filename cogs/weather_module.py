@@ -6,10 +6,10 @@ import pytz
 import random
 import sqlite3
 import requests
-from config import location_module, WEATHER_API
+from config import location_module
 
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
-API_KEY = WEATHER_API
+API_KEY = 'd4c0c71642812337eb766540d63a8482'
 
 class weatherModule(commands.Cog):
     def __init__(self, bot):

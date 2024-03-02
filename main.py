@@ -4,7 +4,6 @@ import os
 import random
 from itertools import cycle
 import asyncio
-from config import TOKEN
 from cogs.message_module import messageModule
 from cogs.member_module import memberModule, create_database
 from cogs.weather_module import weatherModule
@@ -46,4 +45,4 @@ async def on_ready():
       random_delay = random.uniform(15, 600)  
       await asyncio.sleep(random_delay)
       
-bot.run('TOKEN')
+bot.run('MTEyMDEyOTE2NjE3NjY4MTk4NA.GRtcgw.GTtNmrk76isdU_7xY6nvIfaLzf53S-uD-Lmng8')
