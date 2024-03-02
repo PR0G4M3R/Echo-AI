@@ -45,4 +45,4 @@ async def on_ready():
       random_delay = random.uniform(15, 600)  
       await asyncio.sleep(random_delay)
       
-bot.run('MTEyMDEyOTE2NjE3NjY4MTk4NA.GRtcgw.GTtNmrk76isdU_7xY6nvIfaLzf53S-uD-Lmng8')
+bot.run('TOKEN')
