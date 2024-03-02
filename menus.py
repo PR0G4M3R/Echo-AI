@@ -1,17 +1,12 @@
 import asyncio
 import discord
-
 import itertools
 import inspect
-import bisect
 import logging
 import re
 from collections import OrderedDict, namedtuple
 
-# Needed for the setup.py script
 __version__ = '1.0.0-a'
-
-# consistency with the `discord` namespaced logging
 log = logging.getLogger(__name__)
 
 class MenuError(Exception):
@@ -50,36 +45,23 @@ class Position:
         return isinstance(other, Position) and other.bucket == self.bucket and other.number == self.number
 
     def __le__(self, other):
-        r = Position.__lt__(other, self)
-        if r is NotImplemented:
-            return NotImplemented
-        return not r
+        return not Position.__lt__(other, self)
 
     def __gt__(self, other):
         return Position.__lt__(other, self)
 
     def __ge__(self, other):
-        r = Position.__lt__(self, other)
-        if r is NotImplemented:
-            return NotImplemented
-        return not r
+        return not Position.__lt__(self, other)
 
     def __repr__(self):
-        return '<{0.__class__.__name__}: {0.number}>'.format(self)
+        return f'<{self.__class__.__name__}: {self.number}>'
 
-class Last(Position):
-    __slots__ = ()
-    def __init__(self, number=0):
-        super().__init__(number, bucket=2)
-
-class First(Position):
-    __slots__ = ()
-    def __init__(self, number=0):
-        super().__init__(number, bucket=0)
+_last = Last()
+_first = First()
 
 _custom_emoji = re.compile(r'<?(?P<animated>a)?:?(?P<name>[A-Za-z0-9\_]+):(?P<id>[0-9]{13,20})>?')
 
-def _cast_emoji(obj, *, _custom_emoji=_custom_emoji):
+def _cast_emoji(obj):
     if isinstance(obj, discord.PartialEmoji):
         return obj
 
@@ -99,7 +81,7 @@ class Button:
     def __init__(self, emoji, action, *, skip_if=None, position=None, lock=True):
         self.emoji = _cast_emoji(emoji)
         self.action = action
-        self.skip_if = skip_if
+        self.skip_if = skip_if or (lambda x: False)
         self.position = position or Position(0)
         self.lock = lock
 
@@ -118,9 +100,8 @@ class Button:
         except AttributeError:
             self._skip_if = value
         else:
-            # Unfurl the method to not be bound
             if not isinstance(menu_self, Menu):
-                raise TypeError('skip_if bound method must be from Menu not %r' % menu_self)
+                raise TypeError(f'skip_if bound method must be from Menu not {menu_self}')
 
             self._skip_if = value.__func__
 
@@ -135,14 +116,13 @@ class Button:
         except AttributeError:
             pass
         else:
-            # Unfurl the method to not be bound
             if not isinstance(menu_self, Menu):
-                raise TypeError('action bound method must be from Menu not %r' % menu_self)
+                raise TypeError(f'action bound method must be from Menu not {menu_self}')
 
             value = value.__func__
 
         if not inspect.iscoroutinefunction(value):
-            raise TypeError('action must be a coroutine not %r' % value)
+            raise TypeError(f'action must be a coroutine not {value}')
 
         self._action = value
 
@@ -167,7 +147,6 @@ def button(emoji, **kwargs):
 class _MenuMeta(type):
     @classmethod
     def __prepare__(cls, name, bases, **kwargs):
-        # This is needed to maintain member order for the buttons
         return OrderedDict()
 
     def __new__(cls, name, bases, attrs, **kwargs):
@@ -176,7 +155,6 @@ class _MenuMeta(type):
 
         inherit_buttons = kwargs.pop('inherit_buttons', True)
         if inherit_buttons:
-            # walk MRO to get all buttons even in subclasses
             for base in reversed(new_cls.__mro__):
                 for elem, value in base.__dict__.items():
                     try:
@@ -238,13 +216,11 @@ class Menu(metaclass=_MenuMeta):
         if react:
             if self.__tasks:
                 async def wrapped():
-                    # Add the reaction
                     try:
                         await self.message.add_reaction(button.emoji)
                     except discord.HTTPException:
                         raise
                     else:
-                        # Update the cache to have the value
                         self.buttons[button.emoji] = button
 
                 return wrapped()
@@ -264,9 +240,6 @@ class Menu(metaclass=_MenuMeta):
         if react:
             if self.__tasks:
                 async def wrapped():
-                    # Remove the reaction from being processable
-                    # Removing it from the cache first makes it so the check
-                    # doesn't get triggered.
                     self.buttons.pop(emoji, None)
                     await self.message.remove_reaction(emoji, self.__me)
                 return wrapped()
@@ -281,7 +254,6 @@ class Menu(metaclass=_MenuMeta):
         if react:
             if self.__tasks:
                 async def wrapped():
-                    # A fast path if we have permissions
                     if self._can_remove_reactions:
                         try:
                             del self.buttons
@@ -291,7 +263,6 @@ class Menu(metaclass=_MenuMeta):
                             await self.message.clear_reactions()
                         return
 
-                    # Remove the cache (the next call will have the updated buttons)
                     reactions = list(self.buttons.keys())
                     try:
                         del self.buttons
@@ -307,7 +278,6 @@ class Menu(metaclass=_MenuMeta):
             return dummy()
 
     def should_add_reactions(self):
-        """:class:`bool`: Whether to add reactions to this menu session."""
         return len(self.buttons)
 
     def _verify_permissions(self, ctx, channel, permissions):
@@ -336,7 +306,6 @@ class Menu(metaclass=_MenuMeta):
         try:
             self.__timed_out = False
             loop = self.bot.loop
-            # Ensure the name exists for the cancellation handling
             tasks = []
             while self._running:
                 tasks = [
@@ -350,27 +319,14 @@ class Menu(metaclass=_MenuMeta):
                 if len(done) == 0:
                     raise asyncio.TimeoutError()
 
-                # Exception will propagate if e.g. cancelled or timed out
                 payload = done.pop().result()
                 loop.create_task(self.update(payload))
-
-                # NOTE: Removing the reaction ourselves after it's been done when
-                # mixed with the checks above is incredibly racy.
-                # There is no guarantee when the MESSAGE_REACTION_REMOVE event will
-                # be called, and chances are when it does happen it'll always be
-                # after the remove_reaction HTTP call has returned back to the caller
-                # which means that the stuff above will catch the reaction that we
-                # just removed.
-
-                # For the future sake of myself and to save myself the hours in the future
-                # consider this my warning.
 
         except asyncio.TimeoutError:
             self.__timed_out = True
         finally:
             self._event.set()
 
-            # Cancel any outstanding tasks (if any)
             for task in tasks:
                 task.cancel()
 
@@ -381,12 +337,9 @@ class Menu(metaclass=_MenuMeta):
             finally:
                 self.__timed_out = False
 
-            # Can't do any requests if the bot is closed
             if self.bot.is_closed():
                 return
 
-            # Wrap it in another block anyway just to ensure
-            # nothing leaks out during clean-up
             try:
                 if self.delete_message_after:
                     return await self.message.delete()
@@ -419,12 +372,9 @@ class Menu(metaclass=_MenuMeta):
             await self.on_menu_button_error(exc)
 
     async def on_menu_button_error(self, exc):
-        # some users may wish to take other actions during or beyond logging
-        # which would require awaiting, such as stopping an erroring menu.
         log.exception("Unhandled exception during menu update.", exc_info=exc)
 
     async def start(self, ctx, *, channel=None, wait=False):
-        # Clear the buttons cache and re-compute if possible.
         try:
             del self.buttons
         except AttributeError:
@@ -444,7 +394,6 @@ class Menu(metaclass=_MenuMeta):
             self.message = msg = await self.send_initial_message(ctx, channel)
 
         if self.should_add_reactions():
-            # Start the task first so we can listen to reactions before doing anything
             for task in self.__tasks:
                 task.cancel()
             self.__tasks.clear()
@@ -467,7 +416,6 @@ class Menu(metaclass=_MenuMeta):
         raise NotImplementedError
 
     def stop(self):
-        """Stops the internal loop."""
         self._running = False
         for task in self.__tasks:
             task.cancel()
@@ -476,11 +424,6 @@ class Menu(metaclass=_MenuMeta):
 class PageSource:
     async def _prepare_once(self):
         try:
-            # Don't feel like formatting hasattr with
-            # the proper mangling
-            # read this as follows:
-            # if hasattr(self, '__prepare')
-            # except that it works as you expect
             self.__prepare
         except AttributeError:
             await self.prepare()
@@ -509,12 +452,11 @@ class MenuPages(Menu):
 
     @property
     def source(self):
-        """:class:`PageSource`: The source where the data comes from."""
         return self._source
 
     async def change_source(self, source):
         if not isinstance(source, PageSource):
-            raise TypeError('Expected {0!r} not {1.__class__!r}.'.format(PageSource, source))
+            raise TypeError('Expected PageSource not {source.__class__.__name__}.')
 
         self._source = source
         self.current_page = 0
@@ -553,12 +495,10 @@ class MenuPages(Menu):
         max_pages = self._source.get_max_pages()
         try:
             if max_pages is None:
-                # If it doesn't give maximum pages, it cannot be checked
                 await self.show_page(page_number)
             elif max_pages > page_number >= 0:
                 await self.show_page(page_number)
         except IndexError:
-            # An error happened that can be handled, so ignore it.
             pass
 
     async def show_current_page(self):
@@ -574,29 +514,23 @@ class MenuPages(Menu):
     @button('\N{BLACK LEFT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}\ufe0f',
             position=First(0), skip_if=_skip_double_triangle_buttons)
     async def go_to_first_page(self, payload):
-        """go to the first page"""
         await self.show_page(0)
 
     @button('\N{BLACK LEFT-POINTING TRIANGLE}\ufe0f', position=First(1))
     async def go_to_previous_page(self, payload):
-        """go to the previous page"""
         await self.show_checked_page(self.current_page - 1)
 
     @button('\N{BLACK RIGHT-POINTING TRIANGLE}\ufe0f', position=Last(0))
     async def go_to_next_page(self, payload):
-        """go to the next page"""
         await self.show_checked_page(self.current_page + 1)
 
     @button('\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}\ufe0f',
             position=Last(1), skip_if=_skip_double_triangle_buttons)
     async def go_to_last_page(self, payload):
-        """go to the last page"""
-        # The call here is safe because it's guarded by skip_if
         await self.show_page(self._source.get_max_pages() - 1)
 
     @button('\N{BLACK SQUARE FOR STOP}\ufe0f', position=Last(2))
     async def stop_pages(self, payload):
-        """stops the pagination session."""
         self.stop()
 
 class ListPageSource(PageSource):
@@ -611,11 +545,9 @@ class ListPageSource(PageSource):
         self._max_pages = pages
 
     def is_paginating(self):
-        """:class:`bool`: Whether pagination is required."""
         return len(self.entries) > self.per_page
 
     def get_max_pages(self):
-        """:class:`int`: The maximum number of pages required to paginate this sequence."""
         return self._max_pages
 
     async def get_page(self, page_number):
@@ -624,8 +556,6 @@ class ListPageSource(PageSource):
         else:
             base = page_number * self.per_page
             return self.entries[base:base + self.per_page]
-
-_GroupByEntry = namedtuple('_GroupByEntry', 'key items')
 
 class GroupByPageSource(ListPageSource):
     def __init__(self, entries, *, key, per_page, sort=True):
@@ -638,7 +568,6 @@ class GroupByPageSource(ListPageSource):
                 continue
             size = len(g)
 
-            # Chunk the nested pages
             nested.extend(_GroupByEntry(key=k, items=g[i:i+per_page]) for i in range(0, size, per_page))
 
         super().__init__(nested, per_page=1)
@@ -682,11 +611,9 @@ class AsyncIteratorPageSource(PageSource):
                 cache.append(elem)
 
     async def prepare(self, *, _aiter=_aiter):
-        # Iterate until we have at least a bit more single page
         await self._iterate(self.per_page + 1)
 
     def is_paginating(self):
-        """:class:`bool`: Whether pagination is required."""
         return len(self._cache) > self.per_page
 
     async def _get_single_page(self, page_number):
