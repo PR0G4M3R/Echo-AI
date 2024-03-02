@@ -56,7 +56,7 @@ class HelpModule(commands.Cog):
         # Group commands into categories
         categories = {}
         for command in self.bot.commands:
-            category = command.extras.get("category", "Other")
+            category = command.get("category", "Other")
             if category not in categories:
                 categories[category] = []
             categories[category].append(syntax(command))
