@@ -36,7 +36,7 @@ class HelpMenu(menus.ListPageSource):
         for category in entries:
             # Split content into chunks if it's too long
             cmds_str = "\n\n\u200b".join(self.categories[category])
-            chunks = [cmds_str[i:i + 1024] for i in range(0, len(cmds_str), 1024)]
+            chunks = [cmds_str[i:i + 750] for i in range(0, len(cmds_str), 750)]
 
             for i, chunk in enumerate(chunks):
                 name = f"\u200b{category} (Part {i + 1})"
