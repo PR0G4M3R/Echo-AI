@@ -30,11 +30,12 @@ class HelpMenu(menus.ListPageSource):
             description="What can I help you with?",
             colour=self.ctx.author.colour
         )
-        embed.set_thumbnail(url=self.ctx.author.avatar)
+        
         embed.set_footer(text=f"{offset:,} - {min(len_data, offset + self.per_page - 1):,} of {len_data:,} commands.")
 
         for category in entries:
-            cmds_str = "\n\n\u200b".join(self.categories[category])
+            # Truncate value if too long
+            cmds_str = "\n\n\u200b".join(self.categories[category])[:1021] + "..." if len("\n\n\u200b".join(self.categories[category])) > 1024 else "\n\n\u200b".join(self.categories[category])
             embed.add_field(name=f"\u200b{category}\u200b", value=f"\u200b\n{cmds_str}\n\u200b", inline=False)
 
         return embed
