@@ -45,5 +45,5 @@ async def on_ready():
       random_delay = random.uniform(15, 600)  
       await asyncio.sleep(random_delay)
       
-bot.run(bot_token = os.environ.get('TOKEN')
-)
+bot_token = os.environ.get('TOKEN')
+bot.run(bot_token)
