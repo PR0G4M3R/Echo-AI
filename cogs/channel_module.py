@@ -32,7 +32,7 @@ class channelModule(commands.Cog):
   
     @commands.command(brief='This command gets the info of the server it is used in.', name="serverinfo", aliases=["guildinfo", "si", "gi"])
     async def server_info(self, ctx):
-      banned_users = ctx.guild.bans()
+      banned_users = await ctx.guild.bans()
       banned_users_string = ""
       count = 0
       async for entry in banned_users:
