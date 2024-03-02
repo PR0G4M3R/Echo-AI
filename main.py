@@ -4,6 +4,7 @@ import os
 import random
 from itertools import cycle
 import asyncio
+import cogs
 from cogs.message_module import messageModule
 from cogs.member_module import memberModule, create_database
 from cogs.weather_module import weatherModule
