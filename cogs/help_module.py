@@ -31,11 +31,11 @@ class HelpModule(commands.Cog):
         }
         
         # Populate the category_commands dictionary with lists of commands
-        category_commands["Channel Commands"] = channelCommandInfo
-        category_commands["Member Commands"] = memberCommandInfo
-        category_commands["Moderation Commands"] = moderationCommandInfo
-        category_commands["Reminder Commands"] = reminderCommandInfo
-        category_commands["Weather Commands"] = weatherCommandInfo
+        category_commands["Channel Commands"] = CHANNEL_MODULE_COMMANDS
+        category_commands["Member Commands"] = MEMBER_MODULE_COMMANDS
+        category_commands["Moderation Commands"] = MODERATION_MODULE_COMMANDS
+        category_commands["Reminder Commands"] = REMINDER_MODULE_COMMANDS
+        category_commands["Weather Commands"] = WEATHER_MODULE_COMMANDS
         
         # Add commands to embed
         for catname, commands_list in category_commands.items():
