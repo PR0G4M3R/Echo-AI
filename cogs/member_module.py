@@ -41,6 +41,10 @@ def is_owner_or_admin():
         return False
     return commands.check(predicate)
 
+
+class commandInfo():
+    catname = "Server Commands"
+    catnumber = 2
 class memberModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

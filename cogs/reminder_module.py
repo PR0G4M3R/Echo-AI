@@ -4,6 +4,10 @@ import datetime
 import pytz
 import sqlite3
 import asyncio
+
+class commandInfo():
+    catname = "Reminders"
+    catnumber = 4
  
 class reminderModule(commands.Cog):
     def __init__(self, bot):

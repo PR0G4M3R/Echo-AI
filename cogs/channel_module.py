@@ -4,6 +4,9 @@ import os
 from discord import Embed, Member
 from discord.ext import commands
 
+class commandInfo():
+    catname = "User and Server Info"
+    catnumber = 1
 class channelModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
