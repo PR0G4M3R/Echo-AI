@@ -22,11 +22,11 @@ class HelpModule(commands.Cog):
         
         # Dictionary to hold commands grouped by categories
         category_commands = {
-            channelCommandInfo.catname: [],
-            memberCommandInfo.catname: [],
-            moderationCommandInfo.catname: [],
-            reminderCommandInfo.catname: [],
-            weatherCommandInfo.catname: []
+            "User and Server Info": [],
+            "Server Commands": [],
+            "Admin Commands": [],
+            "Reminders": [],
+            "Location Commands": []
         }
         
         # Group commands by category
@@ -42,6 +42,7 @@ class HelpModule(commands.Cog):
             embed.add_field(name=catname, value=command_list, inline=False)
 
         await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(HelpModule(bot))
