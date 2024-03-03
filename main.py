@@ -16,9 +16,8 @@ from cogs.reminder_module import reminderModule
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="Echo_", intents=intents, case_insensitive=True) 
 status = variables = [
-discord.Game(name='Minecraft'),
+discord.Game(name='StarMade'),
 discord.Activity(type=discord.ActivityType.listening, name='Spotify'),
-discord.Game(name='Crossout'),
 ]
 
 
