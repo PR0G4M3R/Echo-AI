@@ -2,11 +2,11 @@ import discord
 from discord.ext import commands
 from typing import Optional
 from discord import Embed
-from cogs.channel_module import channelCommandInfo, CHANNEL_MODULE_COMMANDS
-from cogs.member_module import memberCommandInfo, MEMBER_MODULE_COMMANDS
-from cogs.moderation_module import moderationCommandInfo, MODERATION_MODULE_COMMANDS
-from cogs.reminder_module import reminderCommandInfo, REMINDER_MODULE_COMMANDS
-from cogs.weather_module import weatherCommandInfo, WEATHER_MODULE_COMMANDS
+from cogs.channel_module import channelCommandInfo
+from cogs.member_module import memberCommandInfo
+from cogs.moderation_module import moderationCommandInfo
+from cogs.reminder_module import reminderCommandInfo
+from cogs.weather_module import weatherCommandInfo
 
 class HelpModule(commands.Cog):
     def __init__(self, bot):
@@ -22,11 +22,11 @@ class HelpModule(commands.Cog):
         
         # Dictionary to hold commands grouped by categories
         category_commands = {
-            "User and Server Info": [CHANNEL_MODULE_COMMANDS],
-            "Server Commands": [MEMBER_MODULE_COMMANDS],
-            "Admin Commands": [MODERATION_MODULE_COMMANDS],
-            "Reminders": [REMINDER_MODULE_COMMANDS],
-            "Location Commands": [WEATHER_MODULE_COMMANDS]
+            "User and Server Info": [],
+            "Server Commands": [],
+            "Admin Commands": [],
+            "Reminders": [],
+            "Location Commands": []
         }
         
         # Group commands by category
