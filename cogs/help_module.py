@@ -45,7 +45,7 @@ class HelpModule(commands.Cog):
         for catname, commands_list in category_commands.items():
             command_list = ""
             for command_name in commands_list:
-                command = self.bot.get_command(command_name)
+                command = self.bot.all_commands.get(command_name)
                 if command:
                     command_list += f"`{command.name}` - {command.brief}\n"
             embed.add_field(name=catname, value=command_list, inline=False)
