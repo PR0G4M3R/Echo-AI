@@ -42,7 +42,7 @@ def is_owner_or_admin():
     return commands.check(predicate)
 
 
-class commandInfo():
+class memberCommandInfo():
     catname = "Server Commands"
     catnumber = 2
 class memberModule(commands.Cog):

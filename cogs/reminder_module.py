@@ -5,7 +5,7 @@ import pytz
 import sqlite3
 import asyncio
 
-class commandInfo():
+class reminderCommandInfo():
     catname = "Reminders"
     catnumber = 4
  

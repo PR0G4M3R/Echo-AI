@@ -17,7 +17,7 @@ def is_guild_owner():
         return ctx.author == ctx.guild.owner
     return commands.check(predicate)
 
-class commandInfo():
+class moderationCommandInfo():
     catname = "Admin Commands"
     catnumber = 3
 class ModerationModule(commands.Cog):

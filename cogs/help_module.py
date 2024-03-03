@@ -3,11 +3,11 @@ from discord.ext import commands
 from typing import Optional
 from discord import Embed
 import cogs
-from cogs.channel_module import commandInfo
-from cogs.member_module import commandInfo
-from cogs.moderation_module import commandInfo
-from cogs.reminder_module import commandInfo
-from cogs.weather_module import commandInfo
+from cogs.channel_module import channelCommandInfo
+from cogs.member_module import memberCommandInfo
+from cogs.moderation_module import moderationCommandInfo
+from cogs.reminder_module import reminderCommandInfo
+from cogs.weather_module import weatherCommandInfo
 
 class HelpModule(commands.Cog):
     def __init__(self, bot):

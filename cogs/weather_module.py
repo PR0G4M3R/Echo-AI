@@ -12,7 +12,7 @@ BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
 API_KEY = 'd4c0c71642812337eb766540d63a8482'
 
 
-class commandInfo():
+class weatherCommandInfo():
     catname = "Location Commands"
     catnumber = 5
 class weatherModule(commands.Cog):
