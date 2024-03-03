@@ -32,7 +32,7 @@ class HelpModule(commands.Cog):
         # Group commands by category
         for command in self.bot.commands:
             if hasattr(command.cog, 'catname'):
-                category_commands[command.cog.catname].append(command)
+                category_commands[command.cog.catname].append(command.name)
         
         # Add commands from constants to the corresponding categories
         category_commands["Server Commands"].extend(CHANNEL_MODULE_COMMANDS)
@@ -47,10 +47,11 @@ class HelpModule(commands.Cog):
             for command_name in commands_list:
                 command = self.bot.all_commands.get(command_name)
                 if command:
-                    command_list += f"`{command.name}` - {command.brief}\n"
+                    command_list += f"`{command_name}` - {command.brief}\n"
             embed.add_field(name=catname, value=command_list, inline=False)
 
         await ctx.send(embed=embed)
+
 
 
 def setup(bot):
