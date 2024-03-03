@@ -22,12 +22,12 @@ class HelpModule(commands.Cog):
         
         # Dictionary to hold commands grouped by categories
         category_commands = {
-            "User and Server Info": [],
-            "Server Commands": [],
-            "Admin Commands": [],
-            "Reminders": [],
-            "Location Commands": [],
-            "Weather Commands": []
+           # "User and Server Info": [],
+           # "Server Commands": [],
+           # "Admin Commands": [],
+           # "Reminders": [],
+           # "Location Commands": [],
+           # "Weather Commands": []
         }
         
         # Populate the category_commands dictionary with lists of commands
