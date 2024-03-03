@@ -4,6 +4,10 @@ from typing import Optional
 from discord import Embed
 import cogs
 from cogs.channel_module import commandInfo
+from cogs.member_module import commandInfo
+from cogs.moderation_module import commandInfo
+from cogs.reminder_module import commandInfo
+from cogs.weather_module import commandInfo
 
 class HelpModule(commands.Cog):
     def __init__(self, bot):
