@@ -2,11 +2,11 @@ import discord
 from discord.ext import commands
 from typing import Optional
 from discord import Embed
-from cogs.channel_module import channelCommandInfo
-from cogs.member_module import memberCommandInfo
-from cogs.moderation_module import moderationCommandInfo
-from cogs.reminder_module import reminderCommandInfo
-from cogs.weather_module import weatherCommandInfo
+from cogs.channel_module import channelCommandInfo, CHANNEL_MODULE_COMMANDS
+from cogs.member_module import memberCommandInfo, MEMBER_MODULE_COMMANDS
+from cogs.moderation_module import moderationCommandInfo, MODERATION_MODULE_COMMANDS
+from cogs.reminder_module import reminderCommandInfo, REMINDER_MODULE_COMMANDS
+from cogs.weather_module import weatherCommandInfo, WEATHER_MODULE_COMMANDS
 
 class HelpModule(commands.Cog):
     def __init__(self, bot):
@@ -26,19 +26,22 @@ class HelpModule(commands.Cog):
             "Server Commands": [],
             "Admin Commands": [],
             "Reminders": [],
-            "Location Commands": []
+            "Location Commands": [],
+            "Weather Commands": []
         }
         
-        # Group commands by category
-        for command in self.bot.commands:
-            if hasattr(command.cog, 'catname'):
-                category_commands[command.cog.catname].append(command)
+        # Populate the category_commands dictionary with lists of commands
+        category_commands["Channel Commands"] = channelCommandInfo
+        category_commands["Member Commands"] = memberCommandInfo
+        category_commands["Moderation Commands"] = moderationCommandInfo
+        category_commands["Reminder Commands"] = reminderCommandInfo
+        category_commands["Weather Commands"] = weatherCommandInfo
         
         # Add commands to embed
         for catname, commands_list in category_commands.items():
             command_list = ""
-            for command in commands_list:
-                command_list += f"`{command.name}` - {command.brief}\n"
+            for command_info in commands_list:
+                command_list += f"`{command_info['name']}` - {command_info['brief']}\n"
             embed.add_field(name=catname, value=command_list, inline=False)
 
         await ctx.send(embed=embed)
@@ -46,3 +49,4 @@ class HelpModule(commands.Cog):
 
 def setup(bot):
     bot.add_cog(HelpModule(bot))
+
