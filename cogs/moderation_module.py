@@ -20,13 +20,23 @@ def is_guild_owner():
 class moderationCommandInfo():
     catname = "Admin Commands"
     catnumber = 3
+
+MODERATION_MODULE_COMMANDS = [
+    {"name": "setup_roles", "brief": "Set the staff roles for the moderator commands."},
+    {"name": "modmail", "brief": "Send a message to mods"},
+    {"name": "mute", "brief": "Mute members"},
+    {"name": "unmute", "brief": "Unmute members"},
+    {"name": "kick", "brief": "This kicks a user."},
+    {"name": "ban", "brief": "This bans a user."},
+    {"name": "unban", "brief": "This unbans a user."}
+]    
 class ModerationModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.log_channel = 1113493098090209392  # Replace this with the actual channel ID
         self.top_3_role_ids = {}  # Dictionary to store top 3 role IDs for each server
 
-    @commands.command(brief="Set the staff roles for the moderator commands.", extras={"category": "Moderation Commands"})
+    @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
     @is_guild_owner()
     async def setup_roles(self, ctx, role1: discord.Role, role2: discord.Role, role3: discord.Role):
         # Store the role IDs in the dictionary for the current server
@@ -41,7 +51,7 @@ class ModerationModule(commands.Cog):
         file.write(f'Staff roles for the moderator commands have been set in {ctx.guild}')
         file.close()
 
-    @commands.command(brief='Send a message to mods', name="modmail", extras={"category": "Helpful Commands"})
+    @commands.command(brief='Send a message to mods', name="modmail")
     @commands.cooldown(1, 900, commands.BucketType.user)  # 1 use every 900 seconds (15 minutes) per user
     async def getmail(self, ctx, *, content: str):  # Use * to collect entire message as one string
       if modmail_module:
@@ -79,7 +89,7 @@ class ModerationModule(commands.Cog):
             await ctx.message.delete()
             await ctx.send(f"Sorry, you are on cooldown. Please wait {error.retry_after:.0f} seconds before using the command again.", delete_after=5)
 
-    @commands.command(brief="Mute members", extras={"category": "Moderation Commands"})
+    @commands.command(brief="Mute members", name="mute")
     @commands.has_permissions(manage_roles=True)
     async def mute(self, ctx, member: discord.Member = None, duration: str = None, *, reason: str = "No reason provided."):
         if member is None:
@@ -118,7 +128,7 @@ class ModerationModule(commands.Cog):
                 file.write(f'Member {member.user} has been unmuted in {ctx.guild}')
                 file.close()
 
-    @commands.command(brief="Unmute members", extras={"category": "Moderation Commands"})
+    @commands.command(brief="Unmute members", name="unmute")
     @commands.has_permissions(manage_roles=True)
     async def unmute(self, ctx, member: discord.Member = None):
         if member is None:
@@ -175,7 +185,7 @@ class ModerationModule(commands.Cog):
         return None
 
 #KICKING &/OR BANNING MEMBERS
-    @commands.command(brief='This kicks a user.', name="kick", extras={"category": "Moderation Commands"})
+    @commands.command(brief='This kicks a user.', name="kick")
     @commands.has_permissions(kick_members=True)
     @is_guild_owner()
     async def kick(self, ctx, member: discord.Member, *, reason: str = "No reason provided."):
@@ -191,7 +201,7 @@ class ModerationModule(commands.Cog):
         except discord.HTTPException:
             await ctx.send("An error occurred while trying to kick the member.")
 
-    @commands.command(brief='This bans a user.', name="ban", extras={"category": "Moderation Commands"})
+    @commands.command(brief='This bans a user.', name="ban")
     @commands.has_permissions(ban_members=True)
     @is_guild_owner()
     async def ban(self, ctx, member: discord.Member, *, reason: str = "No reason provided."):
@@ -207,7 +217,7 @@ class ModerationModule(commands.Cog):
         except discord.HTTPException:
             await ctx.send("An error occurred while trying to ban the member.")
 
-    @commands.command(brief='This unbans a user.', name="unban", extras={"category": "Moderation Commands"})
+    @commands.command(brief='This unbans a user.', name="unban")
     @commands.has_permissions(ban_members=True)
     @is_guild_owner()
     async def unban(self, ctx, *, member_id: int):

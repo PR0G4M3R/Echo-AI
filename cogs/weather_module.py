@@ -15,6 +15,12 @@ API_KEY = 'd4c0c71642812337eb766540d63a8482'
 class weatherCommandInfo():
     catname = "Location Commands"
     catnumber = 5
+
+WEATHER_MODULE_COMMANDS = [
+    {"name": "weather", "brief": "This command gets the weather of a specified location."},
+    {"name": "time", "brief": "Get the current time for various time zones."}
+]
+
 class weatherModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -24,7 +30,7 @@ class weatherModule(commands.Cog):
         fahrenheit = celsius * (9 / 5) + 32
         return celsius, fahrenheit
 
-    @commands.command(brief='This command gets the weather of a specified location.', name="weather", extras={"category": "Location Commands"})
+    @commands.command(brief='This command gets the weather of a specified location.', name="weather")
     async def get_weather(self, ctx, CITY: str):
         if location_module:
             url = BASE_URL + "appid=" + API_KEY + "&q=" + CITY
@@ -64,11 +70,7 @@ class weatherModule(commands.Cog):
             await ctx.send("Location module is not enabled in the config.")
 
 
-class TimeModule(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @commands.command(brief="Get the current time for various time zones.", extras={"category": "Time"})
+    @commands.command(brief="Get the current time for various time zones.", name="time")
     async def time(self, ctx, *, location: str):
         if location_module:
             try:
@@ -87,4 +89,3 @@ class TimeModule(commands.Cog):
 
 def setup(bot):
     bot.add_cog(weatherModule(bot))
-    bot.add_cog(TimeModule(bot))

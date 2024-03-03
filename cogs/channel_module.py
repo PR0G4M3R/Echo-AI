@@ -7,6 +7,12 @@ from discord.ext import commands
 class channelCommandInfo():
     catname = "User and Server Info"
     catnumber = 1
+    
+CHANNEL_MODULE_COMMANDS = [
+    {"name": "userinfo", "brief": "This command gets the user info of yourself or another user.", "aliases": ["memberinfo", "ui", "mi"]},
+    {"name": "serverinfo", "brief": "This command gets the info of the server it is used in.", "aliases": ["guildinfo", "si", "gi"]}
+]
+
 class channelModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

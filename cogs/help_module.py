@@ -2,11 +2,11 @@ import discord
 from discord.ext import commands
 from typing import Optional
 from discord import Embed
-from cogs.channel_module import channelCommandInfo
-from cogs.member_module import memberCommandInfo
-from cogs.moderation_module import moderationCommandInfo
-from cogs.reminder_module import reminderCommandInfo
-from cogs.weather_module import weatherCommandInfo
+from cogs.channel_module import channelCommandInfo, CHANNEL_MODULE_COMMANDS
+from cogs.member_module import memberCommandInfo, MEMBER_MODULE_COMMANDS
+from cogs.moderation_module import moderationCommandInfo, MODERATION_MODULE_COMMANDS
+from cogs.reminder_module import reminderCommandInfo, REMINDER_MODULE_COMMANDS
+from cogs.weather_module import weatherCommandInfo, WEATHER_MODULE_COMMANDS
 
 class HelpModule(commands.Cog):
     def __init__(self, bot):
@@ -18,24 +18,27 @@ class HelpModule(commands.Cog):
         if ctx.invoked_with != "help":  # Check if the command is invoked directly
             return
         
-        embed = discord.Embed(title="Help Menu", color=discord.Color.green())
+        embed = discord.Embed(title="Help Menu", colour=ctx.author.colour)
         
-        categories = {
-            channelCommandInfo.catnumber: channelCommandInfo.catname,
-            memberCommandInfo.catnumber: memberCommandInfo.catname,
-            moderationCommandInfo.catnumber: moderationCommandInfo.catname,
-            reminderCommandInfo.catnumber: reminderCommandInfo.catname,
-            weatherCommandInfo.catnumber: weatherCommandInfo.catname
+        # Dictionary to hold commands grouped by categories
+        category_commands = {
+            channelCommandInfo.catname: [],
+            memberCommandInfo.catname: [],
+            moderationCommandInfo.catname: [],
+            reminderCommandInfo.catname: [],
+            weatherCommandInfo.catname: []
         }
         
-        # Sort categories by catnumber
-        sorted_categories = sorted(categories.items(), key=lambda x: x[0])
-
-        for catnumber, catname in sorted_categories:
+        # Group commands by category
+        for command in self.bot.commands:
+            if hasattr(command.cog, 'catname'):
+                category_commands[command.cog.catname].append(command)
+        
+        # Add commands to embed
+        for catname, commands_list in category_commands.items():
             command_list = ""
-            for command in self.bot.commands:
-                if hasattr(command.cog, 'catnumber') and command.cog.catnumber == catnumber:
-                    command_list += f"`{command.name}` - {command.brief}\n"
+            for command in commands_list:
+                command_list += f"`{command.name}` - {command.brief}\n"
             embed.add_field(name=catname, value=command_list, inline=False)
 
         await ctx.send(embed=embed)

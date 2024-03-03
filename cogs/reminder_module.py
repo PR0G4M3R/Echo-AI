@@ -9,6 +9,14 @@ class reminderCommandInfo():
     catname = "Reminders"
     catnumber = 4
  
+
+REMINDER_MODULE_COMMANDS = [
+    {"name": "remind", "brief": "Make a reminder."},
+    {"name": "reminders", "brief": "View reminders."},
+    {"name": "RemoveRem", "brief": "Remove a reminder."},
+    {"name": "EditRem", "brief": "Edit your reminders."}
+]
+
 class reminderModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -27,7 +35,7 @@ class reminderModule(commands.Cog):
         ''')
         self.db_conn.commit()
  
-    @commands.command(name='remind', brief='Make a reminder.', extras={"category": "Reminder Commands"})
+    @commands.command(name='remind', brief='Make a reminder.')
     async def _remind(self, ctx, time, is_repeating, *, message):
         user_id = ctx.author.id
 
@@ -85,7 +93,7 @@ class reminderModule(commands.Cog):
  
             await asyncio.sleep(60)  # Check for reminders every 60 seconds
  
-    @commands.command(brief='View reminders.', name="reminders", extras={"category": "Reminder Commands"})
+    @commands.command(brief='View reminders.', name="reminders")
     async def reminders(self, ctx):
         user_id = ctx.author.id
         c = self.db_conn.cursor()
@@ -114,7 +122,7 @@ class reminderModule(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(brief='Remove a reminder.', name="RemoveRem", extras={"category": "Reminder Commands"})
+    @commands.command(brief='Remove a reminder.', name="RemoveRem")
     async def _remove(self, ctx, *, message):
         user_id = ctx.author.id
         c = self.db_conn.cursor()
@@ -122,7 +130,7 @@ class reminderModule(commands.Cog):
         self.db_conn.commit()
         await ctx.send('Reminder removed.')
 
-    @commands.command(brief='Edit your reminders.', name="EditRem", extras={"category": "Reminder Commands"})
+    @commands.command(brief='Edit your reminders.', name="EditRem")
     async def _edit(self, ctx, time, is_repeating, *, message):
         user_id = ctx.author.id
         c = self.db_conn.cursor()

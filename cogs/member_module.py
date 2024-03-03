@@ -45,6 +45,16 @@ def is_owner_or_admin():
 class memberCommandInfo():
     catname = "Server Commands"
     catnumber = 2
+
+MEMBER_MODULE_COMMANDS = [
+    {"name": "setwc", "brief": "Set the channel for welcome & goodbye messages."},
+    {"name": "setdm", "brief": "Enable or disable DMs for welcome messages."},
+    {"name": "setthumbnail", "brief": "Set custom thumbnail URL for welcome messages."},
+    {"name": "setimage", "brief": "Set custom image URL for welcome messages."},
+    {"name": "setembed", "brief": "Toggle using embeds for welcome messages."},
+    {"name": "welsets", "brief": "Show the current welcome settings."}
+]
+
 class memberModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -149,7 +159,7 @@ class memberModule(commands.Cog):
             welcome_channel = self.bot.get_channel(welcome_channel_id)
             await welcome_channel.send(f"{goodbyemsg} {member.mention}!")
 
-    @commands.command(brief="Set the channel for welcome & goodbye messages.", extras={"category": "Welcome Configuration"})
+    @commands.command(brief="Set the channel for welcome & goodbye messages.", name="setwc")
     @is_owner_or_admin()
     async def setwc(self, ctx, channel: discord.TextChannel = None):
         if channel is None:
@@ -162,7 +172,7 @@ class memberModule(commands.Cog):
         # Save the server settings after changing the welcome channel
         self.save_server_settings()
 
-    @commands.command(brief="Enable or disable DMs for welcome messages.", extras={"category": "Welcome Configuration"})
+    @commands.command(brief="Enable or disable DMs for welcome messages.", name="setdm")
     @is_owner_or_admin()
     async def setdm(self, ctx, state: bool):
         self.dm_enabled = state
@@ -171,7 +181,7 @@ class memberModule(commands.Cog):
         # Save the server settings after changing the DM state
         self.save_server_settings()
 
-    @commands.command(brief="Set custom thumbnail URL for welcome messages.", extras={"category": "Welcome Configuration"})
+    @commands.command(brief="Set custom thumbnail URL for welcome messages.", name="setthumbnail")
     @is_owner_or_admin()
     async def setthumbnail(self, ctx, thumbnail_url: str = None):
         self.custom_thumbnail_url = thumbnail_url
@@ -180,7 +190,7 @@ class memberModule(commands.Cog):
         # Save the server settings after changing the thumbnail URL
         self.save_server_settings()
 
-    @commands.command(brief="Set custom image URL for welcome messages.", extras={"category": "Welcome Configuration"})
+    @commands.command(brief="Set custom image URL for welcome messages.", name="setimage")
     @is_owner_or_admin()
     async def setimage(self, ctx, image_url: str = None):
         self.custom_image_url = image_url
@@ -189,7 +199,7 @@ class memberModule(commands.Cog):
         # Save the server settings after changing the image URL
         self.save_server_settings()
 
-    @commands.command(brief="Toggle using embeds for welcome messages.", extras={"category": "Welcome Configuration"})
+    @commands.command(brief="Toggle using embeds for welcome messages.", name="setembed")
     @is_owner_or_admin()
     async def setembed(self, ctx, state: bool):
         self.use_embed = state
@@ -198,7 +208,7 @@ class memberModule(commands.Cog):
         # Save the server settings after changing the embed state
         self.save_server_settings()
 
-    @commands.command(brief="Show the current welcome settings.", extras={"category": "Welcome Configuration"})
+    @commands.command(brief="Show the current welcome settings.", name="welsets")
     async def welsets(self, ctx):
         welcome_channel_id = self.welcome_channels.get(ctx.guild.id)
         welcome_channel_mention = ctx.guild.get_channel(welcome_channel_id).mention if welcome_channel_id else "Not set"
