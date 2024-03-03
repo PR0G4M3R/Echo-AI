@@ -22,36 +22,26 @@ class HelpModule(commands.Cog):
         
         # Dictionary to hold commands grouped by categories
         category_commands = {
-            "User and Server Info": [],
-            "Server Commands": [],
-            "Admin Commands": [],
-            "Reminders": [],
-            "Location Commands": []
+            "User and Server Info": [CHANNEL_MODULE_COMMANDS],
+            "Server Commands": [MEMBER_MODULE_COMMANDS],
+            "Admin Commands": [MODERATION_MODULE_COMMANDS],
+            "Reminders": [REMINDER_MODULE_COMMANDS],
+            "Location Commands": [WEATHER_MODULE_COMMANDS]
         }
         
         # Group commands by category
         for command in self.bot.commands:
             if hasattr(command.cog, 'catname'):
-                category_commands[command.cog.catname].append(command.name)
-        
-        # Add commands from constants to the corresponding categories
-        category_commands["Server Commands"].extend(CHANNEL_MODULE_COMMANDS)
-        category_commands["User and Server Info"].extend(MEMBER_MODULE_COMMANDS)
-        category_commands["Admin Commands"].extend(MODERATION_MODULE_COMMANDS)
-        category_commands["Reminders"].extend(REMINDER_MODULE_COMMANDS)
-        category_commands["Location Commands"].extend(WEATHER_MODULE_COMMANDS)
+                category_commands[command.cog.catname].append(command)
         
         # Add commands to embed
         for catname, commands_list in category_commands.items():
             command_list = ""
-            for command_name in commands_list:
-                command = self.bot.all_commands.get(command_name)
-                if command:
-                    command_list += f"`{command_name}` - {command.brief}\n"
+            for command in commands_list:
+                command_list += f"`{command.name}` - {command.brief}\n"
             embed.add_field(name=catname, value=command_list, inline=False)
 
         await ctx.send(embed=embed)
-
 
 
 def setup(bot):
