@@ -2,8 +2,8 @@ import discord
 from discord.ext import commands
 from typing import Optional
 from discord import Embed
-import channel_module
-from channel_module import commandInfo
+import cogs
+from cogs.channel_module import commandInfo
 
 class HelpModule(commands.Cog):
     def __init__(self, bot):
