@@ -15,6 +15,9 @@ class HelpModule(commands.Cog):
 
     @commands.command(brief='This command displays this embed.', name="help")
     async def show_help(self, ctx, cmd: Optional[str] = None):
+        if ctx.invoked_with != "help":  # Check if the command is invoked directly
+            return
+        
         embed = discord.Embed(title="Help Menu", color=discord.Color.green())
         
         categories = {
