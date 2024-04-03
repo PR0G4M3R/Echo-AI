@@ -12,6 +12,7 @@ from cogs.channel_module import channelModule
 from cogs.help_module import HelpModule
 from cogs.moderation_module import ModerationModule
 from cogs.reminder_module import reminderModule
+from cogs.level_module import levelModule
 
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="Echo_", intents=intents, case_insensitive=True) 
@@ -32,6 +33,7 @@ async def on_ready():
     bot.add_cog(HelpModule(bot))
     bot.add_cog(ModerationModule(bot))
     bot.add_cog(reminderModule(bot))
+    bot.add_cog(levelModule(bot))
     await bot.change_presence(status=discord.Status.online, activity=discord.Game('Starting...'))
     await asyncio.sleep(5)
     status_cycle = cycle(variables)
