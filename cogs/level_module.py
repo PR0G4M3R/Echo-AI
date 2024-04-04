@@ -53,7 +53,7 @@ class levelModule(commands.Cog):
         staff_roles = []
         # Use an absolute path for better reliability
         log_file_path = os.path.join('/app', 'logs', 'moderation_log.txt')
-        with open(log_file_path, 'a') as file:
+        with open(log_file_path, 'r') as file:
             for line in file:
                 if line.startswith("Assigned roles:"):
                     # Roles are listed after this line
