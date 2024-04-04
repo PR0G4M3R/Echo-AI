@@ -21,10 +21,10 @@ class levelModule(commands.Cog):
         self.bot = bot
         self.connection = sqlite3.connect('level_data.db')
         self.cursor = self.connection.cursor()
-        self.create_tables()
-        self.create_tables2()
+        asyncio.create_task(self.create_tables())
+        asyncio.create_task(self.create_tables2())
 
-    def create_tables2(self):
+    async def create_tables2(self):
         # Create tables if they don't exist
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS user_xp (
                                 user_id INTEGER PRIMARY KEY,
