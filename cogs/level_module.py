@@ -41,14 +41,14 @@ class levelModule(commands.Cog):
         self.cursor.execute('''INSERT OR REPLACE INTO user_xp (user_id, xp) VALUES (?, ?)''', (user_id, xp))
         self.conn.commit()
 
-    async def get_previous_level(self, user_id):
+    async def get_level(self, user_id):
     # Retrieve the previous level from the database
         self.cursor.execute('''SELECT level FROM user_levels WHERE user_id = ?''', (user_id,))
         level_row = self.cursor.fetchone()
         prev_level = level_row[0] if level_row else 0
         return prev_level
 
-    async def update_previous_level(self, user_id, new_level):
+    async def update_level(self, user_id, new_level):
         # Update the user's level in the database
         self.cursor.execute('''INSERT OR REPLACE INTO user_levels (user_id, level) VALUES (?, ?)''', (user_id, new_level))
         self.conn.commit()
