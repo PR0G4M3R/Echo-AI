@@ -74,6 +74,20 @@ class levelModule(commands.Cog):
         await self.track_message(user_id, guild_id)
 
     @commands.command()
+    async def toggle(self, ctx):
+        guild_id = ctx.guild.id
+        staff_roles = self.get_staff_roles(guild_id)
+        
+        # Check if the user invoking the command has any of the staff roles
+        if any(role in [r.id for r in ctx.author.roles] for role in staff_roles):
+            # User has staff roles
+            # Toggle leveling system in the current server
+            enabled_servers[ctx.guild.id] = not enabled_servers.get(ctx.guild.id, True)
+            await ctx.send(f"Leveling system {'enabled' if enabled_servers[ctx.guild.id] else 'disabled'}.")
+        else:
+            await ctx.send("You do not have permission to use this command.")
+
+    @commands.command()
     async def view_level(self, ctx, user: discord.Member = None):
         user = user or ctx.author
         guild_id = ctx.guild.id
