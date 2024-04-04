@@ -64,8 +64,8 @@ class levelModule(commands.Cog):
         # Send level-up message to the designated channel
         # Implement this method as per your requirement
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
+     @commands.Cog.listener()
+     async def on_message(self, message):
         # Award 1 XP per message
         await self.update_user_xp(message.author.id, 1)
 
