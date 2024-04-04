@@ -1,7 +1,7 @@
 from config import levels_module
 import discord
 from discord.ext import commands
-
+from moderation_module import has_staff_role
 
 class levelCommandInfo():
     catname = "Leveling"
@@ -48,6 +48,7 @@ class levelModule(commands.Cog):
         return False
 
     @commands.command()
+    @has_staff_role() 
     async def toggle(self, ctx):
         # Check if the user invoking the command is a staff member
         if not await self.is_staff(ctx):
