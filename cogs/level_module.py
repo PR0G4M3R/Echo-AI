@@ -1,6 +1,8 @@
+from config import levels_module
 import discord
 from discord.ext import commands
 import os
+
 
 class levelCommandInfo():
     catname = "Leveling"
@@ -14,11 +16,37 @@ LEVEL_MODULE_COMMANDS = [
 # Dictionary to store enabled/disabled status for each server
 enabled_servers = {}
 
+# Define the increment of XP required for each level
+XP_INCREMENT_PER_LEVEL = 5
+
+# Dictionary to store user XP
+user_xp = {}
+
 class levelModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.xp_requirements = [0, 5]  # XP requirements for each level
-        self.user_xp = {}  # Dictionary to store user XP across servers
+        
+    async def update_user_xp(self, user_id, xp):
+        # Update user's XP
+        if user_id in user_xp:
+            user_xp[user_id] += xp
+        else:
+            user_xp[user_id] = xp
+
+    async def get_level(self, user_id):
+        # Calculate user's level based on XP thresholds
+        xp = user_xp.get(user_id, 0)
+        level = 1
+        xp_threshold = XP_INCREMENT_PER_LEVEL
+        while xp >= xp_threshold:
+            level += 1
+            xp_threshold += XP_INCREMENT_PER_LEVEL
+        return level
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        # Award 1 XP per message
+        await self.update_user_xp(message.author.id, 1)
 
     def get_staff_roles(self, guild_id):
         # Read staff roles from the moderation log file for the given guild_id
@@ -38,41 +66,6 @@ class levelModule(commands.Cog):
                         staff_roles.append(role_id)
         return staff_roles
 
-    async def track_message(self, user_id, guild_id):
-        # Track the user's message and award XP
-        xp_gained = 1
-        self.user_xp[guild_id][user_id] = self.user_xp[guild_id].get(user_id, 0) + xp_gained
-        await self.check_level_up(user_id, guild_id)
-
-    async def check_level_up(self, user_id, guild_id):
-        # Check if the user has reached a new level and adjust their level if necessary
-        current_xp = self.user_xp[guild_id].get(user_id, 0)
-        current_level = self.get_level(current_xp)
-        required_xp = self.xp_requirements[current_level + 1]
-        if current_xp >= required_xp:
-            new_level = self.get_level(current_xp)
-            await self.update_level(user_id, guild_id, new_level)
-
-    def get_level(self, xp):
-        # Calculate the user's level based on XP
-        level = 0
-        while xp >= self.xp_requirements[level + 1]:
-            level += 1
-        return level
-
-    async def update_level(self, user_id, guild_id, new_level):
-        # Update the user's level
-        self.user_xp[guild_id][user_id] = new_level
-        # Optionally, you can send a message or perform other actions when a user levels up
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot:  # Ignore messages from bots
-            return
-        guild_id = message.guild.id
-        user_id = message.author.id
-        await self.track_message(user_id, guild_id)
-
     @commands.command()
     async def toggle(self, ctx):
         guild_id = ctx.guild.id
@@ -81,19 +74,18 @@ class levelModule(commands.Cog):
         # Check if the user invoking the command has any of the staff roles
         if any(role in [r.id for r in ctx.author.roles] for role in staff_roles):
             # User has staff roles
-            # Toggle leveling system in the current server
+             # Toggle leveling system in the current server
             enabled_servers[ctx.guild.id] = not enabled_servers.get(ctx.guild.id, True)
             await ctx.send(f"Leveling system {'enabled' if enabled_servers[ctx.guild.id] else 'disabled'}.")
+            pass
         else:
-            await ctx.send("You do not have permission to use this command.")
+                await ctx.send("You do not have permission to use this command.")
 
     @commands.command()
     async def view_level(self, ctx, user: discord.Member = None):
         user = user or ctx.author
-        guild_id = ctx.guild.id
-        user_xp = self.user_xp.get(guild_id, {}).get(user.id, 0)
-        level = self.get_level(user_xp)
-        await ctx.send(f"{user.display_name} is at level {level} with {user_xp} XP.")
+        level = await self.get_level(user.id)
+        await ctx.send(f"{user.display_name} is at level {level}.")
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
