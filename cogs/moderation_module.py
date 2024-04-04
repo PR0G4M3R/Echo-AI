@@ -4,48 +4,33 @@ from discord import Embed, DMChannel
 from discord.ext import commands
 import asyncio
 import re
-import json
+import sqlite3
 import datetime
 import pytz
 from config import modmail_module
 
-TOP_ROLES_FILE = "top_roles.json"
-MODERATION_LOG_FILE = "moderation_log.json"
-MUTE_LOG_FILE = "mute_log.json"
-KICK_LOG_FILE = "kick_log.json"
-BAN_LOG_FILE = "ban_log.json"
+# Connect to SQLite database
+conn = sqlite3.connect('moderation.db')
+c = conn.cursor()
 
-# Load moderation logs from files
-try:
-    with open(MUTE_LOG_FILE, "r") as file:
-        mute_log = json.load(file)
-except FileNotFoundError:
-    mute_log = []
+# Create tables if they don't exist
+c.execute('''CREATE TABLE IF NOT EXISTS mute_log
+             (timestamp TEXT, member_id INTEGER, reason TEXT)''')
 
-try:
-    with open(KICK_LOG_FILE, "r") as file:
-        kick_log = json.load(file)
-except FileNotFoundError:
-    kick_log = []
+c.execute('''CREATE TABLE IF NOT EXISTS kick_log
+             (timestamp TEXT, member_id INTEGER, reason TEXT)''')
 
-try:
-    with open(BAN_LOG_FILE, "r") as file:
-        ban_log = json.load(file)
-except FileNotFoundError:
-    ban_log = []
+c.execute('''CREATE TABLE IF NOT EXISTS ban_log
+             (timestamp TEXT, member_id INTEGER, reason TEXT)''')
 
-try:
-    with open(TOP_ROLES_FILE, "r") as file:
-        top_roles_data = json.load(file)
-except FileNotFoundError:
-    top_roles_data = {}
+c.execute('''CREATE TABLE IF NOT EXISTS moderation_log
+             (timestamp TEXT, action TEXT, roles TEXT)''')
 
-# Load moderation log from file
-try:
-    with open(MODERATION_LOG_FILE, "r") as file:
-        moderation_log = json.load(file)
-except FileNotFoundError:
-    moderation_log = []
+c.execute('''CREATE TABLE IF NOT EXISTS top_roles
+             (guild_id INTEGER, role_1 INTEGER, role_2 INTEGER, role_3 INTEGER)''')
+
+# Save (commit) the changes
+conn.commit()
 
 date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
@@ -68,13 +53,21 @@ MODERATION_MODULE_COMMANDS = [
     {"name": "kick", "brief": "This kicks a user."},
     {"name": "ban", "brief": "This bans a user."},
     {"name": "unban", "brief": "This unbans a user."}
-]    
+]
+
 class ModerationModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.log_channel = 1113493098090209392  # Replace this with the actual channel ID
         self.top_3_role_ids = {}  # Dictionary to store top 3 role IDs for each server
     
+    # Function to execute SQL queries
+    def execute_query(self, query, values=None):
+        if values:
+            c.execute(query, values)
+        else:
+            c.execute(query)
+        conn.commit()
 
     @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
     @is_guild_owner()
@@ -101,15 +94,18 @@ class ModerationModule(commands.Cog):
         self.save_top_roles()
 
     def save_top_roles(self):
-        # Save top 3 role IDs to file
-        with open(TOP_ROLES_FILE, "w") as file:
-            json.dump(self.top_3_role_ids, file)
+        # Save top 3 role IDs to SQLite database
+        query = '''INSERT INTO top_roles (guild_id, role_1, role_2, role_3) VALUES (?, ?, ?, ?)'''
+        guild_id = ctx.guild.id
+        values = (guild_id, *self.top_3_role_ids.get(guild_id, [None, None, None]))
+        self.execute_query(query, values)
 
     def save_moderation_log(self):
-        # Save moderation log to file
-        with open(MODERATION_LOG_FILE, "w") as file:
-            json.dump(moderation_log, file)
-
+        # Save moderation log to SQLite database
+        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
+        query = '''INSERT INTO moderation_log (timestamp, action, roles) VALUES (?, ?, ?)'''
+        values = (timestamp, log_entry["action"], ", ".join(log_entry["roles"]))
+        self.execute_query(query, values)
 
     @commands.command(brief='Send a message to mods', name="modmail")
     @commands.cooldown(1, 900, commands.BucketType.user)  # 1 use every 900 seconds (15 minutes) per user
@@ -150,35 +146,28 @@ class ModerationModule(commands.Cog):
             await ctx.send(f"Sorry, you are on cooldown. Please wait {error.retry_after:.0f} seconds before using the command again.", delete_after=5)
 
     async def log_mute(self, guild_id, member_id, reason):
-        log_entry = {
-            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
-            "member_id": member_id,
-            "reason": reason
-        }
-        mute_log.append(log_entry)
-        self.save_log(MUTE_LOG_FILE, mute_log)
+        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
+        query = '''INSERT INTO mute_log (timestamp, member_id, reason) VALUES (?, ?, ?)'''
+        values = (timestamp, member_id, reason)
+        self.execute_query(query, values)
 
     async def log_kick(self, guild_id, member_id, reason):
-        log_entry = {
-            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
-            "member_id": member_id,
-            "reason": reason
-        }
-        kick_log.append(log_entry)
-        self.save_log(KICK_LOG_FILE, kick_log)
+        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
+        query = '''INSERT INTO kick_log (timestamp, member_id, reason) VALUES (?, ?, ?)'''
+        values = (timestamp, member_id, reason)
+        self.execute_query(query, values)
 
     async def log_ban(self, guild_id, member_id, reason):
-        log_entry = {
-            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
-            "member_id": member_id,
-            "reason": reason
-        }
-        ban_log.append(log_entry)
-        self.save_log(BAN_LOG_FILE, ban_log)
+        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
+        query = '''INSERT INTO ban_log (timestamp, member_id, reason) VALUES (?, ?, ?)'''
+        values = (timestamp, member_id, reason)
+        self.execute_query(query, values)
 
-    def save_log(self, file_path, log_data):
-        with open(file_path, "w") as file:
-            json.dump(log_data, file)
+    async def log_unban(self, guild_id, member_id):
+        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
+        query = '''INSERT INTO ban_log (timestamp, member_id) VALUES (?, ?)'''
+        values = (timestamp, member_id)
+        self.execute_query(query, values)
 
     # Mute command
     @commands.command(brief="Mute members", name="mute")
@@ -268,9 +257,25 @@ class ModerationModule(commands.Cog):
         unban_log.append(log_entry)
         self.save_log(BAN_LOG_FILE, unban_log)
 
-    def save_log(self, file_path, log_data):
-        with open(file_path, "w") as file:
-            json.dump(log_data, file)
+    def save_log(self, table_name, log_data):
+        # Connect to the SQLite database
+        conn = sqlite3.connect('moderation_logs.db')
+        cursor = conn.cursor()
+        
+        # Create the table if it doesn't exist
+        cursor.execute(f'''CREATE TABLE IF NOT EXISTS {table_name} (
+                            timestamp TEXT,
+                            member_id INTEGER,
+                            reason TEXT
+                        )''')
+        
+        # Insert log data into the table
+        for log_entry in log_data:
+            cursor.execute(f"INSERT INTO {table_name} (timestamp, member_id, reason) VALUES (?, ?, ?)", (log_entry['timestamp'], log_entry['member_id'], log_entry['reason']))
+        
+        # Commit changes and close connection
+        conn.commit()
+        conn.close()
 
     # Ban command
     @commands.command(brief='This bans a user.', name="ban")
@@ -306,9 +311,6 @@ class ModerationModule(commands.Cog):
         except discord.HTTPException:
             await ctx.send("An error occurred while trying to unban the member.")
 
-
-
-
-
 def setup(bot):
     bot.add_cog(ModerationModule(bot))
+
