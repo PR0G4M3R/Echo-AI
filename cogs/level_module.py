@@ -19,20 +19,23 @@ class levelModule(commands.Cog):
         self.bot = bot
 
     def get_staff_roles(self, guild_id):
-            # Read staff roles from the moderation log file for the given guild_id
-            staff_roles = []
-            with open('../logs/moderation_log.txt', 'r') as file:
-                for line in f:
-                    if line.startswith("Assigned roles:"):
-                        # Roles are listed after this line
-                        for role_line in f:
-                            if not role_line.strip():
-                                # End of roles section
-                                break
-                            # Extract role ID from the line and add it to staff_roles
-                            role_id = int(role_line.split('(')[-1].split(')')[0])
-                            staff_roles.append(role_id)
-            return staff_roles
+        # Read staff roles from the moderation log file for the given guild_id
+        staff_roles = []
+        # Use an absolute path for better reliability
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        log_file_path = os.path.join(dir_path, 'logs', 'moderation_log.txt')
+        with open(log_file_path, 'r') as file:
+            for line in file:
+                if line.startswith("Assigned roles:"):
+                    # Roles are listed after this line
+                    for role_line in file:
+                        if not role_line.strip():
+                            # End of roles section
+                            break
+                        # Extract role ID from the line and add it to staff_roles
+                        role_id = int(role_line.split('(')[-1].split(')')[0])
+                        staff_roles.append(role_id)
+        return staff_roles
 
     @commands.command()
     async def toggle(self, ctx):
