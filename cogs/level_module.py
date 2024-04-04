@@ -38,6 +38,18 @@ class levelModule(commands.Cog):
                               )''')
         self.connection.commit()
 
+        # Check if the levelup_channels table exists
+        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='levelup_channels'")
+        table_exists = self.cursor.fetchone() is not None
+        if not table_exists:
+            # Table doesn't exist, create it
+            self.cursor.execute('''CREATE TABLE levelup_channels (
+                                    guild_id INTEGER PRIMARY KEY,
+                                    channel_id INTEGER
+                                  )''')
+            # Commit the transaction to save the changes
+            self.connection.commit()
+
     async def update_user_xp(self, user_id, xp):
         # Update user's XP
         self.cursor.execute('''INSERT OR REPLACE INTO user_xp (user_id, xp) VALUES (?, ?)''', (user_id, xp))
@@ -119,12 +131,10 @@ class levelModule(commands.Cog):
 
     @commands.command()
     async def set_levelup_channel(self, ctx, channel: discord.TextChannel):
-        # Set the channel where level-up messages will be sent
-        levelup_channels[ctx.guild.id] = channel.id
-        await ctx.send(f"Level-up messages will now be sent to {channel.mention}.")
-
+        # Store the level up channel in the database
         self.cursor.execute('''INSERT OR REPLACE INTO levelup_channels (guild_id, channel_id) VALUES (?, ?)''', (ctx.guild.id, channel.id))
         self.connection.commit()
+        await ctx.send(f"Level up messages will now be sent in {channel.mention}.")
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
