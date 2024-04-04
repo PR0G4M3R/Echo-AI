@@ -80,24 +80,17 @@ class ModerationModule(commands.Cog):
 
         roles_mentions = "\n".join([f"Role {i+1}: {role.mention}" for i, role in enumerate(roles)])
         await ctx.send(f"Staff roles for the moderator commands have been set:\n{roles_mentions}")
+        
+        # Log the moderation action
+        await self.log_moderation_action(ctx.guild.id, ctx.author.id, ctx.author.id, "Setup Roles", "Roles were setup")
+        
+        # Save top 3 role IDs to the SQLite database
+        self.save_top_roles(ctx.guild.id, role_ids)
 
-        # Log the action
-        log_entry = {
-            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
-            "action": f"Staff roles for the moderator commands have been set in {ctx.guild}",
-            "roles": [role.name for role in roles]
-        }
-        moderation_log.append(log_entry)
-        self.save_moderation_log()
-
-        # Save top 3 role IDs to file
-        self.save_top_roles()
-
-    def save_top_roles(self):
+    async def save_top_roles(self, guild_id, role_ids):
         # Save top 3 role IDs to SQLite database
         query = '''INSERT INTO top_roles (guild_id, role_1, role_2, role_3) VALUES (?, ?, ?, ?)'''
-        guild_id = ctx.guild.id
-        values = (guild_id, *self.top_3_role_ids.get(guild_id, [None, None, None]))
+        values = (guild_id, *role_ids, *[None] * (3 - len(role_ids)))  # Fill with None if less than 3 roles provided
         self.execute_query(query, values)
 
     def save_moderation_log(self):
@@ -145,30 +138,6 @@ class ModerationModule(commands.Cog):
             await ctx.message.delete()
             await ctx.send(f"Sorry, you are on cooldown. Please wait {error.retry_after:.0f} seconds before using the command again.", delete_after=5)
 
-    async def log_mute(self, guild_id, member_id, reason):
-        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
-        query = '''INSERT INTO mute_log (timestamp, member_id, reason) VALUES (?, ?, ?)'''
-        values = (timestamp, member_id, reason)
-        self.execute_query(query, values)
-
-    async def log_kick(self, guild_id, member_id, reason):
-        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
-        query = '''INSERT INTO kick_log (timestamp, member_id, reason) VALUES (?, ?, ?)'''
-        values = (timestamp, member_id, reason)
-        self.execute_query(query, values)
-
-    async def log_ban(self, guild_id, member_id, reason):
-        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
-        query = '''INSERT INTO ban_log (timestamp, member_id, reason) VALUES (?, ?, ?)'''
-        values = (timestamp, member_id, reason)
-        self.execute_query(query, values)
-
-    async def log_unban(self, guild_id, member_id):
-        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
-        query = '''INSERT INTO ban_log (timestamp, member_id) VALUES (?, ?)'''
-        values = (timestamp, member_id)
-        self.execute_query(query, values)
-
     # Mute command
     @commands.command(brief="Mute members", name="mute")
     @commands.has_permissions(manage_roles=True)
@@ -188,7 +157,7 @@ class ModerationModule(commands.Cog):
             await member.edit(roles=[muted_role])
 
             await ctx.send(f"{member.mention} has been muted.")
-            await self.log_mute(ctx.guild.id, member.id, reason)
+            await self.log_action(ctx.guild.id, "Mute", member.id, reason)
 
             if duration:
                 # Parse the duration using the "parse_duration" function
@@ -201,7 +170,7 @@ class ModerationModule(commands.Cog):
                 # Restore the roles to the member after the mute duration
                 await member.edit(roles=member_roles)
                 await ctx.send(f"{member.mention} has been unmuted after {duration}.")
-                await self.log_mute(ctx.guild.id, member.id, f"Automatic unmute after {duration}")
+                await self.log_action(ctx.guild.id, "Unmute", member.id, reason="Mute expired")
 
     # Unmute command
     @commands.command(brief="Unmute members", name="unmute")
@@ -225,55 +194,48 @@ class ModerationModule(commands.Cog):
 
         await member.edit(roles=stored_roles)
         await ctx.send(f"{member.mention} has been unmuted.")
-        await self.log_mute(ctx.guild.id, member.id, "Manual unmute")
+        await self.log_action(ctx.guild.id, "Unmute", member.id, reason="Manual unmute")
+
+    @commands.command(brief="Kick members", name="kick")
+    @commands.has_permissions(kick_members=True)
+    async def kick(self, ctx, member: discord.Member = None, *, reason: str = "No reason provided."):
+        if member is None:
+            await ctx.send("Please mention a member to kick.")
+            return
+
+        try:
+            await member.kick(reason=reason)
+            await ctx.send(f"{member.mention} has been kicked.")
+            await self.log_action(ctx.guild.id, "Kick", member.id, reason)
+        except discord.Forbidden:
+            await ctx.send("I don't have permission to kick members.")
+        except discord.HTTPException:
+            await ctx.send("Failed to kick the member. Please try again later.")
 
     def get_stored_roles(self, member):
         # Get the stored roles of the member from the top_3_role_ids dictionary
         guild_id = member.guild.id
 
-    async def log_kick(self, guild_id, member_id, reason):
-        log_entry = {
-            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
-            "member_id": member_id,
-            "reason": reason
-        }
-        kick_log.append(log_entry)
-        self.save_log(KICK_LOG_FILE, kick_log)
+    async def log_action(self, guild_id, action, member_id, reason=None):
+        timestamp = str(datetime.datetime.now(pytz.timezone('UTC')))
+        log_entry = {"timestamp": timestamp, "action": action, "member_id": member_id, "reason": reason}
+        self.save_log(guild_id, log_entry)
 
-    async def log_ban(self, guild_id, member_id, reason):
-        log_entry = {
-            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
-            "member_id": member_id,
-            "reason": reason
-        }
-        ban_log.append(log_entry)
-        self.save_log(BAN_LOG_FILE, ban_log)
-
-    async def log_unban(self, guild_id, member_id):
-        log_entry = {
-            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
-            "member_id": member_id
-        }
-        unban_log.append(log_entry)
-        self.save_log(BAN_LOG_FILE, unban_log)
-
-    def save_log(self, table_name, log_data):
-        # Connect to the SQLite database
+    def save_log(self, guild_id, log_entry):
         conn = sqlite3.connect('moderation_logs.db')
         cursor = conn.cursor()
-        
-        # Create the table if it doesn't exist
-        cursor.execute(f'''CREATE TABLE IF NOT EXISTS {table_name} (
+
+        cursor.execute('''CREATE TABLE IF NOT EXISTS moderation_logs (
+                            guild_id INTEGER,
                             timestamp TEXT,
+                            action TEXT,
                             member_id INTEGER,
                             reason TEXT
-                        )''')
-        
-        # Insert log data into the table
-        for log_entry in log_data:
-            cursor.execute(f"INSERT INTO {table_name} (timestamp, member_id, reason) VALUES (?, ?, ?)", (log_entry['timestamp'], log_entry['member_id'], log_entry['reason']))
-        
-        # Commit changes and close connection
+                          )''')
+
+        cursor.execute('''INSERT INTO moderation_logs (guild_id, timestamp, action, member_id, reason)
+                          VALUES (?, ?, ?, ?, ?)''', (guild_id, log_entry['timestamp'], log_entry['action'], log_entry['member_id'], log_entry.get('reason', None)))
+
         conn.commit()
         conn.close()
 
@@ -285,7 +247,7 @@ class ModerationModule(commands.Cog):
         try:
             await member.ban(reason=reason)
             await ctx.send(f"{member.mention} has been banned for: {reason}.")
-            await self.log_ban(ctx.guild.id, member.id, reason)
+            await self.log_action(ctx.guild.id, "Ban", member.id, reason)
         except discord.Forbidden:
             await ctx.send("I do not have the required permissions to ban members.")
         except discord.HTTPException:
@@ -302,7 +264,7 @@ class ModerationModule(commands.Cog):
                 if ban_entry.user.id == member_id:
                     await ctx.guild.unban(ban_entry.user)
                     await ctx.send(f"{ban_entry.user.mention} has been unbanned.")
-                    await self.log_unban(ctx.guild.id, member_id)
+                    await self.log_action(ctx.guild.id, "Unban", member.id, reason)
                     return
 
             await ctx.send("User not found in the ban list.")
@@ -313,4 +275,3 @@ class ModerationModule(commands.Cog):
 
 def setup(bot):
     bot.add_cog(ModerationModule(bot))
-
