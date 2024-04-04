@@ -1,7 +1,6 @@
 from config import levels_module
 import discord
 from discord.ext import commands
-from moderation_module import has_staff_role
 
 class levelCommandInfo():
     catname = "Leveling"
@@ -23,29 +22,22 @@ enabled_servers = {}
 class levelModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.staff_roles = {}
 
-        # Load staff roles from the file when the bot starts
-        self.load_staff_roles()
-
-    def load_staff_roles(self):
-        try:
-            file_path = os.path.join(os.path.dirname(__file__), "..", "logs", "moderation_log.txt")
-            with open(file_path, "r") as file:
-                for line in file:
-                    server_id, role_ids = line.strip().split(":")
-                    self.staff_roles[int(server_id)] = [int(role_id) for role_id in role_ids.split(",")]
-        except FileNotFoundError:
-            print("Staff roles file not found. Skipping loading staff roles.")
-
-    async def is_staff(self, ctx):
-        # Check if the user invoking the command has one of the staff roles
-        if ctx.guild.id in self.staff_roles:
-            member_roles = [role.id for role in ctx.author.roles]
-            for role_id in self.staff_roles[ctx.guild.id]:
-                if role_id in member_roles:
-                    return True
-        return False
+    def get_staff_roles(self):
+        # Read staff roles from the moderation log file
+        staff_roles = []
+        with open('logs/moderation_log.txt', 'r') as f:
+            for line in f:
+                if line.startswith("Assigned roles:"):
+                    # Roles are listed after this line
+                    for role_line in f:
+                        if not role_line.strip():
+                            # End of roles section
+                            break
+                        # Extract role ID from the line and add it to staff_roles
+                        role_id = int(role_line.split('(')[-1].split(')')[0])
+                        staff_roles.append(role_id)
+        return staff_roles
 
     @commands.command()
     @has_staff_role() 
