@@ -22,8 +22,9 @@ class levelModule(commands.Cog):
         self.connection = sqlite3.connect('level_data.db')
         self.cursor = self.connection.cursor()
         self.create_tables()
+        self.create_tables2()
 
-    def create_tables(self):
+    def create_tables2(self):
         # Create tables if they don't exist
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS user_xp (
                                 user_id INTEGER PRIMARY KEY,
@@ -41,7 +42,7 @@ class levelModule(commands.Cog):
         self.cursor.execute('''INSERT OR REPLACE INTO user_xp (user_id, xp) VALUES (?, ?)''', (user_id, xp))
         self.conn.commit()
 
-    async def get_level(self, user_id):
+    async def create_tables(self):
         # Check if the user_levels table exists
         self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_levels'")
         table_exists = self.cursor.fetchone() is not None
@@ -54,17 +55,12 @@ class levelModule(commands.Cog):
             # Commit the transaction to save the changes
             self.connection.commit()
 
+    async def get_level(self, user_id):
         # Retrieve the previous level from the database
         self.cursor.execute('''SELECT level FROM user_levels WHERE user_id = ?''', (user_id,))
         level_row = self.cursor.fetchone()
         prev_level = level_row[0] if level_row else 0
         return prev_level
-
-    # Retrieve the previous level from the database
-        self.cursor.execute('''SELECT level FROM user_levels WHERE user_id = ?''', (user_id,))
-        level_row = self.cursor.fetchone()
-        prev_level = level_row[0] if level_row else 0
-        return prev_levell
 
     async def update_level(self, user_id, new_level):
         # Update the user's level in the database
