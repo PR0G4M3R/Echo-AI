@@ -35,12 +35,12 @@ class levelModule(commands.Cog):
                                 guild_id INTEGER PRIMARY KEY,
                                 channel_id INTEGER
                               )''')
-        self.conn.commit()
+        self.connection.commit()
 
     async def update_user_xp(self, user_id, xp):
         # Update user's XP
         self.cursor.execute('''INSERT OR REPLACE INTO user_xp (user_id, xp) VALUES (?, ?)''', (user_id, xp))
-        self.conn.commit()
+        self.connection.commit()
 
     async def create_tables(self):
         # Check if the user_levels table exists
@@ -65,7 +65,7 @@ class levelModule(commands.Cog):
     async def update_level(self, user_id, new_level):
         # Update the user's level in the database
         self.cursor.execute('''INSERT OR REPLACE INTO user_levels (user_id, level) VALUES (?, ?)''', (user_id, new_level))
-        self.conn.commit()
+        self.connection.commit()
 
     async def send_level_up_message(self, user_id, level):
         # Send level-up message to the designated channel
@@ -123,7 +123,7 @@ class levelModule(commands.Cog):
         await ctx.send(f"Level-up messages will now be sent to {channel.mention}.")
 
         self.cursor.execute('''INSERT OR REPLACE INTO levelup_channels (guild_id, channel_id) VALUES (?, ?)''', (ctx.guild.id, channel.id))
-        self.conn.commit()
+        self.connection.commit()
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
