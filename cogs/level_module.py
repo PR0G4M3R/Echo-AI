@@ -42,11 +42,23 @@ class levelModule(commands.Cog):
         self.conn.commit()
 
     async def get_level(self, user_id):
+    # Check if the user_levels table exists
+        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_levels'")
+        table_exists = self.cursor.fetchone() is not None
+        if not table_exists:
+            # Table doesn't exist, create it
+            self.cursor.execute('''CREATE TABLE user_levels (
+                                    user_id INTEGER PRIMARY KEY,
+                                    level INTEGER DEFAULT 0
+                                )''')
+            # Commit the transaction to save the changes
+            self.connection.commit()
+
     # Retrieve the previous level from the database
         self.cursor.execute('''SELECT level FROM user_levels WHERE user_id = ?''', (user_id,))
         level_row = self.cursor.fetchone()
         prev_level = level_row[0] if level_row else 0
-        return prev_level
+        return prev_levell
 
     async def update_level(self, user_id, new_level):
         # Update the user's level in the database
