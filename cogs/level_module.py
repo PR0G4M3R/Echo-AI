@@ -19,8 +19,8 @@ XP_INCREMENT_PER_LEVEL = 5
 class levelModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.conn = sqlite3.connect('level_data.db')
-        self.cursor = self.conn.cursor()
+        self.connection = sqlite3.connect('level_data.db')
+        self.cursor = self.connection.cursor()
         self.create_tables()
 
     def create_tables(self):
