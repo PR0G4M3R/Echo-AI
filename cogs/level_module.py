@@ -1,8 +1,6 @@
-from config import levels_module
 import discord
 from discord.ext import commands
-import os
-import json
+import sqlite3
 
 class levelCommandInfo():
     catname = "Leveling"
@@ -14,52 +12,39 @@ LEVEL_MODULE_COMMANDS = [
     {"name": "set_levelup_channel", "brief":"Set the channel level messages are sent to."}
 ]
 
-# Dictionary to store enabled/disabled status for each server
-enabled_servers = {}
-
 # Define the increment of XP required for each level
 XP_INCREMENT_PER_LEVEL = 5
-
-# Dictionary to store user XP
-USER_XP_FILE = "/json/user_xp.json"
-LEVELUP_CHANNELS_FILE = "/json/levelup_channels.json"
-
-try:
-    with open(USER_XP_FILE, "r") as file:
-        user_xp = json.load(file)
-except FileNotFoundError:
-    user_xp = {}
-
-# Load level-up channel data from file
-try:
-    with open(LEVELUP_CHANNELS_FILE, "r") as file:
-        levelup_channels = json.load(file)
-except FileNotFoundError:
-    levelup_channels = {}
 
 class levelModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        
+        self.conn = sqlite3.connect('level_data.db')
+        self.cursor = self.conn.cursor()
+        self.create_tables()
+
+    def create_tables(self):
+        # Create tables if they don't exist
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS user_xp (
+                                user_id INTEGER PRIMARY KEY,
+                                xp INTEGER
+                              )''')
+
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS levelup_channels (
+                                guild_id INTEGER PRIMARY KEY,
+                                channel_id INTEGER
+                              )''')
+        self.conn.commit()
+
     async def update_user_xp(self, user_id, xp):
         # Update user's XP
-        if user_id in user_xp:
-            user_xp[user_id] += xp
-        else:
-            user_xp[user_id] = xp
-
-    def save_user_xp(self):
-        # Save user XP data to file
-        with open(USER_XP_FILE, "w") as file:
-            json.dump(user_xp, file)
+        self.cursor.execute('''INSERT OR REPLACE INTO user_xp (user_id, xp) VALUES (?, ?)''', (user_id, xp))
+        self.conn.commit()
 
     async def get_level(self, user_id):
-        # Load user XP data from JSON file
-        with open('/json/user_xp.json', 'r') as file:
-            user_xp_data = json.load(file)
-
-        # Get user's XP from loaded data
-        xp = user_xp_data.get(str(user_id), 0)
+        # Get user's XP from the database
+        self.cursor.execute('''SELECT xp FROM user_xp WHERE user_id = ?''', (user_id,))
+        xp_row = self.cursor.fetchone()
+        xp = xp_row[0] if xp_row else 0
 
         # Calculate user's level based on XP thresholds
         level = 1
@@ -75,16 +60,9 @@ class levelModule(commands.Cog):
         
         return level
 
-
     async def send_level_up_message(self, user_id, level):
         # Send level-up message to the designated channel
-        guild = self.bot.get_guild(ctx.guild.id)
-        channel_id = levelup_channels.get(guild.id)
-        if channel_id:
-            channel = guild.get_channel(channel_id)
-            user = guild.get_member(user_id)
-            if channel and user:
-                await channel.send(f"Congratulations to {user.display_name} for reaching level {level}!")
+        # Implement this method as per your requirement
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -117,12 +95,12 @@ class levelModule(commands.Cog):
         # Check if the user invoking the command has any of the staff roles
         if any(role in [r.id for r in ctx.author.roles] for role in staff_roles):
             # User has staff roles
-             # Toggle leveling system in the current server
+            # Toggle leveling system in the current server
             enabled_servers[ctx.guild.id] = not enabled_servers.get(ctx.guild.id, True)
             await ctx.send(f"Leveling system {'enabled' if enabled_servers[ctx.guild.id] else 'disabled'}.")
             pass
         else:
-                await ctx.send("You do not have permission to use this command.")
+            await ctx.send("You do not have permission to use this command.")
 
     @commands.command()
     async def view_level(self, ctx, user: discord.Member = None):
@@ -137,8 +115,9 @@ class levelModule(commands.Cog):
         levelup_channels[ctx.guild.id] = channel.id
         await ctx.send(f"Level-up messages will now be sent to {channel.mention}.")
 
-        with open(LEVELUP_CHANNELS_FILE, "w") as file:
-                json.dump(levelup_channels, file)
+        self.cursor.execute('''INSERT OR REPLACE INTO levelup_channels (guild_id, channel_id) VALUES (?, ?)''', (ctx.guild.id, channel.id))
+        self.conn.commit()
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
+
