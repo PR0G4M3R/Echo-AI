@@ -43,16 +43,13 @@ class ModerationModule(commands.Cog):
         if len(roles) < 1:
             return await ctx.send("Please provide at least one role.")
 
-        role_ids = [role.id for role in roles[:3]]  # Limit to top 3 roles if more than 3 are provided
-        self.top_3_role_ids[ctx.guild.id] = role_ids
-
-        roles_mentions = "\n".join([f"Role {i+1}: {role.mention}" for i, role in enumerate(roles)])
-        await ctx.send(f"Staff roles for the moderator commands have been set:\n{roles_mentions}")
+        role_mentions = "\n".join([f"{role.mention}" for role in roles])
+        await ctx.send(f"Staff roles for the moderator commands have been set:\n{role_mentions}")
 
         # Log the action
-        with open('logs/moderation_log.txt', 'a') as file:
-            file.write(f'{date_str}, {time_str}\n')
-            file.write(f'Staff roles for the moderator commands have been set in {ctx.guild}\n')
+        log_file_name = f'logs/moderation_log_{ctx.guild.name.replace(" ", "_")}.txt'
+        with open(log_file_name, 'a') as file:
+            file.write(f'{datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}: Staff roles for the moderator commands have been set\n')
             file.write("Assigned roles:\n")
             for role in roles:
                 file.write(f"{role.name} ({role.id})\n")
