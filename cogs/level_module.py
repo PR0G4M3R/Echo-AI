@@ -42,7 +42,7 @@ class levelModule(commands.Cog):
         staff_roles = self.get_staff_roles(guild_id)
         
         # Check if the user invoking the command has any of the staff roles
-        if any(role.id in [r.id for r in ctx.author.roles] for role in staff_roles):
+        if any(role in [r.id for r in ctx.author.roles] for role in staff_roles):
             # User has staff roles
              # Toggle leveling system in the current server
             enabled_servers[ctx.guild.id] = not enabled_servers.get(ctx.guild.id, True)
