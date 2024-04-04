@@ -20,7 +20,7 @@ import os
 # Dictionary to store enabled/disabled status for each server
 enabled_servers = {}
 
-class Leveling(commands.Cog):
+class levelModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.staff_roles = {}
@@ -64,4 +64,4 @@ class Leveling(commands.Cog):
         await ctx.send(f"{user.display_name} is at level {level}.")
 
 def setup(bot):
-    bot.add_cog(Leveling(bot))
+    bot.add_cog(levelModule(bot))
