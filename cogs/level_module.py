@@ -21,8 +21,8 @@ enabled_servers = {}
 XP_INCREMENT_PER_LEVEL = 5
 
 # Dictionary to store user XP
-USER_XP_FILE = "user_xp.json"
-LEVELUP_CHANNELS_FILE = "levelup_channels.json"
+USER_XP_FILE = "/json/user_xp.json"
+LEVELUP_CHANNELS_FILE = "/json/levelup_channels.json"
 
 try:
     with open(USER_XP_FILE, "r") as file:
@@ -55,7 +55,7 @@ class levelModule(commands.Cog):
 
     async def get_level(self, user_id):
         # Load user XP data from JSON file
-        with open('user_xp_data.json', 'r') as file:
+        with open('/json/user_xp_data.json', 'r') as file:
             user_xp_data = json.load(file)
 
         # Get user's XP from loaded data

@@ -266,7 +266,7 @@ class ModerationModule(commands.Cog):
             "member_id": member_id
         }
         unban_log.append(log_entry)
-        self.save_log(UNBAN_LOG_FILE, unban_log)
+        self.save_log(BAN_LOG_FILE, unban_log)
 
     def save_log(self, file_path, log_data):
         with open(file_path, "w") as file:
