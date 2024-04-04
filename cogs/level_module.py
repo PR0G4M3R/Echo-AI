@@ -21,7 +21,7 @@ class levelModule(commands.Cog):
     def get_staff_roles(self, guild_id):
             # Read staff roles from the moderation log file for the given guild_id
             staff_roles = []
-            with open(f'logs/moderation_log_{guild_id}.txt', 'r') as f:
+            with open(f'../logs/moderation_log_{guild_id}.txt', 'r') as f:
                 for line in f:
                     if line.startswith("Assigned roles:"):
                         # Roles are listed after this line
