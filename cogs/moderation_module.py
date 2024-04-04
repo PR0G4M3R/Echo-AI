@@ -7,6 +7,7 @@ import re
 import sqlite3
 import datetime
 import pytz
+import os
 from config import modmail_module
 
 # Connect to SQLite database
