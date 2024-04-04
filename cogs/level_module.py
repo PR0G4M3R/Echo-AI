@@ -37,6 +37,7 @@ class levelModule(commands.Cog):
     @commands.command()
     async def toggle(self, ctx):
         guild_id = ctx.guild.id
+        staff_roles = self.get_staff_roles(guild_id)
         
         # Check if the user invoking the command has any of the staff roles
         if any(role.id in [r.id for r in ctx.author.roles] for role in staff_roles):
