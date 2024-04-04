@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 
 
-class reminderCommandInfo():
+class levelCommandInfo():
     catname = "Leveling"
     catnumber = 6
 
