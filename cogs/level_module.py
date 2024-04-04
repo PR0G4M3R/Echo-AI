@@ -55,7 +55,7 @@ class levelModule(commands.Cog):
 
     async def get_level(self, user_id):
         # Load user XP data from JSON file
-        with open('/json/user_xp_data.json', 'r') as file:
+        with open('/json/user_xp.json', 'r') as file:
             user_xp_data = json.load(file)
 
         # Get user's XP from loaded data
