@@ -10,29 +10,6 @@ import pytz
 import os
 from config import modmail_module
 
-# Connect to SQLite database
-conn = sqlite3.connect('moderation.db')
-c = conn.cursor()
-
-# Create tables if they don't exist
-c.execute('''CREATE TABLE IF NOT EXISTS mute_log
-             (timestamp TEXT, member_id INTEGER, reason TEXT)''')
-
-c.execute('''CREATE TABLE IF NOT EXISTS kick_log
-             (timestamp TEXT, member_id INTEGER, reason TEXT)''')
-
-c.execute('''CREATE TABLE IF NOT EXISTS ban_log
-             (timestamp TEXT, member_id INTEGER, reason TEXT)''')
-
-c.execute('''CREATE TABLE IF NOT EXISTS moderation_log
-             (timestamp TEXT, action TEXT, roles TEXT)''')
-
-c.execute('''CREATE TABLE IF NOT EXISTS top_roles
-             (guild_id INTEGER, role_1 INTEGER, role_2 INTEGER, role_3 INTEGER)''')
-
-# Save (commit) the changes
-conn.commit()
-
 date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
@@ -61,7 +38,29 @@ class ModerationModule(commands.Cog):
         self.bot = bot
         self.log_channel = 1113493098090209392  # Replace this with the actual channel ID
         self.top_3_role_ids = {}  # Dictionary to store top 3 role IDs for each server
-    
+        self.connection = sqlite3.connect('moderation.db')
+        self.cursor = self.connection.cursor()
+
+        # Call create_tables method with await
+        asyncio.create_task(self.create_tables())
+
+    async def create_tables(self):
+        # Check if the moderation_log table exists
+        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='moderation_log'")
+        table_exists = self.cursor.fetchone() is not None
+        if not table_exists:
+            # Table doesn't exist, create it
+            self.cursor.execute('''CREATE TABLE moderation_log (
+                                    id INTEGER PRIMARY KEY,
+                                    guild_id INTEGER,
+                                    mod_id INTEGER,
+                                    target_id INTEGER,
+                                    action TEXT,
+                                    reason TEXT
+                                  )''')
+            # Commit the transaction to save the changes
+            self.connection.commit()
+
     # Function to execute SQL queries
     def execute_query(self, query, values=None):
         if values:
