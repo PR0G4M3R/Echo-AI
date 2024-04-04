@@ -36,20 +36,26 @@ class ModerationModule(commands.Cog):
         self.log_channel = 1113493098090209392  # Replace this with the actual channel ID
         self.top_3_role_ids = {}  # Dictionary to store top 3 role IDs for each server
 
-    @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
-    @is_guild_owner()
-    async def setup_roles(self, ctx, role1: discord.Role, role2: discord.Role, role3: discord.Role):
-        # Store the role IDs in the dictionary for the current server
-        self.top_3_role_ids[ctx.guild.id] = [role1.id, role2.id, role3.id]
+        @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
+        @is_guild_owner()
+        async def setup_roles(self, ctx, *roles: discord.Role):
+            if len(roles) < 1:
+                return await ctx.send("Please provide at least one role.")
 
-        await ctx.send(f"Staff roles for the moderator commands have been set.\n"
-                       f"Role 1: {role1.mention}\n"
-                       f"Role 2: {role2.mention}\n"
-                       f"Role 3: {role3.mention}")
-        file = open('logs/moderation_log.txt', 'a')
-        file.write(f'{date_str}, {time_str}\n')
-        file.write(f'Staff roles for the moderator commands have been set in {ctx.guild}')
-        file.close()
+            role_ids = [role.id for role in roles[:3]]  # Limit to top 3 roles if more than 3 are provided
+            self.top_3_role_ids[ctx.guild.id] = role_ids
+
+            roles_mentions = "\n".join([f"Role {i+1}: {role.mention}" for i, role in enumerate(roles)])
+            await ctx.send(f"Staff roles for the moderator commands have been set:\n{roles_mentions}")
+
+            # Log the action
+            with open('logs/moderation_log.txt', 'a') as file:
+                file.write(f'{date_str}, {time_str}\n')
+                file.write(f'Staff roles for the moderator commands have been set in {ctx.guild}\n')
+                file.write("Assigned roles:\n")
+                for role in roles:
+                    file.write(f"{role.name} ({role.id})\n")
+
 
     @commands.command(brief='Send a message to mods', name="modmail")
     @commands.cooldown(1, 900, commands.BucketType.user)  # 1 use every 900 seconds (15 minutes) per user
