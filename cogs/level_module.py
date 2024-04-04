@@ -55,7 +55,7 @@ class levelModule(commands.Cog):
 
     async def get_level(self, user_id):
         # Calculate user's level based on XP thresholds
-        xp = user_xp.get(user_id, 0)
+        xp = self.user_xp.get(user_id, 0)
         level = 1
         xp_threshold = XP_INCREMENT_PER_LEVEL
         while xp >= xp_threshold:
@@ -63,11 +63,12 @@ class levelModule(commands.Cog):
             xp_threshold += XP_INCREMENT_PER_LEVEL
         
         # Check if the user has leveled up compared to their previous level
-        prev_level = await self.get_level(user_id) - 1
+        prev_level = self.get_user_level(user_id)
         if level > prev_level:
             await self.send_level_up_message(user_id, level)
         
         return level
+
 
     async def send_level_up_message(self, user_id, level):
         # Send level-up message to the designated channel
@@ -122,6 +123,7 @@ class levelModule(commands.Cog):
         user = user or ctx.author
         level = await self.get_level(user.id)
         await ctx.send(f"{user.display_name} is at level {level}.")
+        return
 
     @commands.command()
     async def set_levelup_channel(self, ctx, channel: discord.TextChannel):

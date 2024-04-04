@@ -4,9 +4,48 @@ from discord import Embed, DMChannel
 from discord.ext import commands
 import asyncio
 import re
+import json
 import datetime
 import pytz
 from config import modmail_module
+
+TOP_ROLES_FILE = "top_roles.json"
+MODERATION_LOG_FILE = "moderation_log.json"
+MUTE_LOG_FILE = "mute_log.json"
+KICK_LOG_FILE = "kick_log.json"
+BAN_LOG_FILE = "ban_log.json"
+
+# Load moderation logs from files
+try:
+    with open(MUTE_LOG_FILE, "r") as file:
+        mute_log = json.load(file)
+except FileNotFoundError:
+    mute_log = []
+
+try:
+    with open(KICK_LOG_FILE, "r") as file:
+        kick_log = json.load(file)
+except FileNotFoundError:
+    kick_log = []
+
+try:
+    with open(BAN_LOG_FILE, "r") as file:
+        ban_log = json.load(file)
+except FileNotFoundError:
+    ban_log = []
+
+try:
+    with open(TOP_ROLES_FILE, "r") as file:
+        top_roles_data = json.load(file)
+except FileNotFoundError:
+    top_roles_data = {}
+
+# Load moderation log from file
+try:
+    with open(MODERATION_LOG_FILE, "r") as file:
+        moderation_log = json.load(file)
+except FileNotFoundError:
+    moderation_log = []
 
 date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
@@ -50,12 +89,26 @@ class ModerationModule(commands.Cog):
         await ctx.send(f"Staff roles for the moderator commands have been set:\n{roles_mentions}")
 
         # Log the action
-        with open('logs/moderation_log.txt', 'a') as file:
-            file.write(f'{date_str}, {time_str}\n')
-            file.write(f'Staff roles for the moderator commands have been set in {ctx.guild}\n')
-            file.write("Assigned roles:\n")
-            for role in roles:
-                file.write(f"{role.name} ({role.id})\n")
+        log_entry = {
+            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
+            "action": f"Staff roles for the moderator commands have been set in {ctx.guild}",
+            "roles": [role.name for role in roles]
+        }
+        moderation_log.append(log_entry)
+        self.save_moderation_log()
+
+        # Save top 3 role IDs to file
+        self.save_top_roles()
+
+    def save_top_roles(self):
+        # Save top 3 role IDs to file
+        with open(TOP_ROLES_FILE, "w") as file:
+            json.dump(self.top_3_role_ids, file)
+
+    def save_moderation_log(self):
+        # Save moderation log to file
+        with open(MODERATION_LOG_FILE, "w") as file:
+            json.dump(moderation_log, file)
 
 
     @commands.command(brief='Send a message to mods', name="modmail")
@@ -96,6 +149,38 @@ class ModerationModule(commands.Cog):
             await ctx.message.delete()
             await ctx.send(f"Sorry, you are on cooldown. Please wait {error.retry_after:.0f} seconds before using the command again.", delete_after=5)
 
+    async def log_mute(self, guild_id, member_id, reason):
+        log_entry = {
+            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
+            "member_id": member_id,
+            "reason": reason
+        }
+        mute_log.append(log_entry)
+        self.save_log(MUTE_LOG_FILE, mute_log)
+
+    async def log_kick(self, guild_id, member_id, reason):
+        log_entry = {
+            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
+            "member_id": member_id,
+            "reason": reason
+        }
+        kick_log.append(log_entry)
+        self.save_log(KICK_LOG_FILE, kick_log)
+
+    async def log_ban(self, guild_id, member_id, reason):
+        log_entry = {
+            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
+            "member_id": member_id,
+            "reason": reason
+        }
+        ban_log.append(log_entry)
+        self.save_log(BAN_LOG_FILE, ban_log)
+
+    def save_log(self, file_path, log_data):
+        with open(file_path, "w") as file:
+            json.dump(log_data, file)
+
+    # Mute command
     @commands.command(brief="Mute members", name="mute")
     @commands.has_permissions(manage_roles=True)
     async def mute(self, ctx, member: discord.Member = None, duration: str = None, *, reason: str = "No reason provided."):
@@ -114,10 +199,7 @@ class ModerationModule(commands.Cog):
             await member.edit(roles=[muted_role])
 
             await ctx.send(f"{member.mention} has been muted.")
-            file = open('logs/moderation_log.txt', 'a')
-            file.write(f'{date_str}, {time_str}\n')
-            file.write(f'Member {member.user} has been muted in {ctx.guild}')
-            file.close()
+            await self.log_mute(ctx.guild.id, member.id, reason)
 
             if duration:
                 # Parse the duration using the "parse_duration" function
@@ -130,11 +212,9 @@ class ModerationModule(commands.Cog):
                 # Restore the roles to the member after the mute duration
                 await member.edit(roles=member_roles)
                 await ctx.send(f"{member.mention} has been unmuted after {duration}.")
-                file = open('logs/moderation_log.txt', 'a')
-                file.write(f'{date_str}, {time_str}\n')
-                file.write(f'Member {member.user} has been unmuted in {ctx.guild}')
-                file.close()
+                await self.log_mute(ctx.guild.id, member.id, f"Automatic unmute after {duration}")
 
+    # Unmute command
     @commands.command(brief="Unmute members", name="unmute")
     @commands.has_permissions(manage_roles=True)
     async def unmute(self, ctx, member: discord.Member = None):
@@ -156,58 +236,43 @@ class ModerationModule(commands.Cog):
 
         await member.edit(roles=stored_roles)
         await ctx.send(f"{member.mention} has been unmuted.")
-        file = open('logs/moderation_log.txt', 'a')
-        file.write(f'{date_str}, {time_str}\n')
-        file.write(f'Member {member.user} has been unmuted in {ctx.guild}')
-        file.close()
+        await self.log_mute(ctx.guild.id, member.id, "Manual unmute")
 
     def get_stored_roles(self, member):
         # Get the stored roles of the member from the top_3_role_ids dictionary
         guild_id = member.guild.id
-        top_3_role_ids = self.top_3_role_ids.get(guild_id)
 
-        if top_3_role_ids:
-            stored_roles = [role for role in member.roles if role.id in top_3_role_ids]
-        else:
-            stored_roles = []
+    async def log_kick(self, guild_id, member_id, reason):
+        log_entry = {
+            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
+            "member_id": member_id,
+            "reason": reason
+        }
+        kick_log.append(log_entry)
+        self.save_log(KICK_LOG_FILE, kick_log)
 
-        return stored_roles
+    async def log_ban(self, guild_id, member_id, reason):
+        log_entry = {
+            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
+            "member_id": member_id,
+            "reason": reason
+        }
+        ban_log.append(log_entry)
+        self.save_log(BAN_LOG_FILE, ban_log)
 
-    def parse_duration(self, duration):
-        # Regular expression to match the duration format (e.g., '10s', '1h', '30m')
-        duration_pattern = re.compile(r"^(\d+)([smh])$")
-        match = duration_pattern.match(duration)
+    async def log_unban(self, guild_id, member_id):
+        log_entry = {
+            "timestamp": str(datetime.datetime.now(pytz.timezone('UTC'))),
+            "member_id": member_id
+        }
+        unban_log.append(log_entry)
+        self.save_log(UNBAN_LOG_FILE, unban_log)
 
-        if match:
-            amount = int(match.group(1))
-            unit = match.group(2)
+    def save_log(self, file_path, log_data):
+        with open(file_path, "w") as file:
+            json.dump(log_data, file)
 
-            if unit == "s":
-                return amount
-            elif unit == "m":
-                return amount * 60
-            elif unit == "h":
-                return amount * 3600
-
-        return None
-
-#KICKING &/OR BANNING MEMBERS
-    @commands.command(brief='This kicks a user.', name="kick")
-    @commands.has_permissions(kick_members=True)
-    @is_guild_owner()
-    async def kick(self, ctx, member: discord.Member, *, reason: str = "No reason provided."):
-        try:
-            await member.kick(reason=reason)
-            await ctx.send(f"{member.mention} has been kicked for: {reason}.")
-            file = open('logs/moderation_log.txt', 'a')
-            file.write(f'{date_str}, {time_str}\n')
-            file.write(f'Member {member.user} has been kicked from {ctx.guild} for: {reason}')
-            file.close()
-        except discord.Forbidden:
-            await ctx.send("I do not have the required permissions to kick members.")
-        except discord.HTTPException:
-            await ctx.send("An error occurred while trying to kick the member.")
-
+    # Ban command
     @commands.command(brief='This bans a user.', name="ban")
     @commands.has_permissions(ban_members=True)
     @is_guild_owner()
@@ -215,15 +280,13 @@ class ModerationModule(commands.Cog):
         try:
             await member.ban(reason=reason)
             await ctx.send(f"{member.mention} has been banned for: {reason}.")
-            file = open('logs/moderation_log.txt', 'a')
-            file.write(f'{date_str}, {time_str}\n')
-            file.write(f'Member {member.user} has been banned from {ctx.guild} for: {reason}')
-            file.close()
+            await self.log_ban(ctx.guild.id, member.id, reason)
         except discord.Forbidden:
             await ctx.send("I do not have the required permissions to ban members.")
         except discord.HTTPException:
             await ctx.send("An error occurred while trying to ban the member.")
 
+    # Unban command
     @commands.command(brief='This unbans a user.', name="unban")
     @commands.has_permissions(ban_members=True)
     @is_guild_owner()
@@ -234,10 +297,7 @@ class ModerationModule(commands.Cog):
                 if ban_entry.user.id == member_id:
                     await ctx.guild.unban(ban_entry.user)
                     await ctx.send(f"{ban_entry.user.mention} has been unbanned.")
-                    file = open('logs/moderation_log.txt', 'a')
-                    file.write(f'{date_str}, {time_str}\n')
-                    file.write(f'Member {ban_entry.user} has been unbanned in {ctx.guild}')
-                    file.close()
+                    await self.log_unban(ctx.guild.id, member_id)
                     return
 
             await ctx.send("User not found in the ban list.")
