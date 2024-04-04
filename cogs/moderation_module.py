@@ -36,25 +36,25 @@ class ModerationModule(commands.Cog):
         self.log_channel = 1113493098090209392  # Replace this with the actual channel ID
         self.top_3_role_ids = {}  # Dictionary to store top 3 role IDs for each server
 
-        @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
-        @is_guild_owner()
-        async def setup_roles(self, ctx, *roles: discord.Role):
-            if len(roles) < 1:
-                return await ctx.send("Please provide at least one role.")
+    @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
+    @is_guild_owner()
+    async def setup_roles(self, ctx, *roles: discord.Role):
+        if len(roles) < 1:
+            return await ctx.send("Please provide at least one role.")
 
-            role_ids = [role.id for role in roles[:3]]  # Limit to top 3 roles if more than 3 are provided
-            self.top_3_role_ids[ctx.guild.id] = role_ids
+        role_ids = [role.id for role in roles[:3]]  # Limit to top 3 roles if more than 3 are provided
+        self.top_3_role_ids[ctx.guild.id] = role_ids
 
-            roles_mentions = "\n".join([f"Role {i+1}: {role.mention}" for i, role in enumerate(roles)])
-            await ctx.send(f"Staff roles for the moderator commands have been set:\n{roles_mentions}")
+        roles_mentions = "\n".join([f"Role {i+1}: {role.mention}" for i, role in enumerate(roles)])
+        await ctx.send(f"Staff roles for the moderator commands have been set:\n{roles_mentions}")
 
-            # Log the action
-            with open('logs/moderation_log.txt', 'a') as file:
-                file.write(f'{date_str}, {time_str}\n')
-                file.write(f'Staff roles for the moderator commands have been set in {ctx.guild}\n')
-                file.write("Assigned roles:\n")
-                for role in roles:
-                    file.write(f"{role.name} ({role.id})\n")
+        # Log the action
+        with open('logs/moderation_log.txt', 'a') as file:
+            file.write(f'{date_str}, {time_str}\n')
+            file.write(f'Staff roles for the moderator commands have been set in {ctx.guild}\n')
+            file.write("Assigned roles:\n")
+            for role in roles:
+                file.write(f"{role.name} ({role.id})\n")
 
 
     @commands.command(brief='Send a message to mods', name="modmail")
