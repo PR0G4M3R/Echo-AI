@@ -2,7 +2,7 @@ from config import levels_module
 import discord
 from discord.ext import commands
 import os
-from moderation_module import has_staff_role
+from cogs.moderation_module import has_staff_role
 
 class levelCommandInfo():
     catname = "Leveling"
