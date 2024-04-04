@@ -29,6 +29,7 @@ class HelpModule(commands.Cog):
            # "Reminders": [],
            # "Location Commands": [],
            # "Weather Commands": []
+           # "Level Commands": []
         }
         
         # Populate the category_commands dictionary with lists of commands
@@ -37,6 +38,7 @@ class HelpModule(commands.Cog):
         category_commands["Moderation Commands"] = MODERATION_MODULE_COMMANDS
         category_commands["Reminder Commands"] = REMINDER_MODULE_COMMANDS
         category_commands["Weather Commands"] = WEATHER_MODULE_COMMANDS
+        category_commands["Level Commands"] = LEVEL_MODULE_COMMANDS
         
         # Add commands to embed
         for catname, commands_list in category_commands.items():
