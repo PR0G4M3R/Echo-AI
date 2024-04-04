@@ -54,8 +54,14 @@ class levelModule(commands.Cog):
             json.dump(user_xp, file)
 
     async def get_level(self, user_id):
+        # Load user XP data from JSON file
+        with open('user_xp_data.json', 'r') as file:
+            user_xp_data = json.load(file)
+
+        # Get user's XP from loaded data
+        xp = user_xp_data.get(str(user_id), 0)
+
         # Calculate user's level based on XP thresholds
-        xp = self.user_xp.get(user_id, 0)
         level = 1
         xp_threshold = XP_INCREMENT_PER_LEVEL
         while xp >= xp_threshold:
