@@ -7,6 +7,7 @@ from cogs.member_module import memberCommandInfo, MEMBER_MODULE_COMMANDS
 from cogs.moderation_module import moderationCommandInfo, MODERATION_MODULE_COMMANDS
 from cogs.reminder_module import reminderCommandInfo, REMINDER_MODULE_COMMANDS
 from cogs.weather_module import weatherCommandInfo, WEATHER_MODULE_COMMANDS
+from cogs.level_module import levelCommandInfo, LEVEL_MODULE_COMMANDS
 
 class HelpModule(commands.Cog):
     def __init__(self, bot):
