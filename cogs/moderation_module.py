@@ -35,6 +35,7 @@ class ModerationModule(commands.Cog):
         self.bot = bot
         self.log_channel = 1113493098090209392  # Replace this with the actual channel ID
         self.top_3_role_ids = {}  # Dictionary to store top 3 role IDs for each server
+    
 
     @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
     @is_guild_owner()
