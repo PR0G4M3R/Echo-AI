@@ -14,7 +14,7 @@ LEVEL_MODULE_COMMANDS = [
 # Dictionary to store enabled/disabled status for each server
 enabled_servers = {}
 
-class levelmodule(commands.Cog):
+class levelModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.xp_requirements = [0, 5]  # XP requirements for each level
@@ -82,4 +82,4 @@ class levelmodule(commands.Cog):
         await ctx.send(f"{user.display_name} is at level {level} with {user_xp} XP.")
 
 def setup(bot):
-    bot.add_cog(levelmodule(bot))
+    bot.add_cog(levelModule(bot))
