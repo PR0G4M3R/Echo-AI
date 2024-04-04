@@ -22,8 +22,7 @@ class levelModule(commands.Cog):
         # Read staff roles from the moderation log file for the given guild_id
         staff_roles = []
         # Use an absolute path for better reliability
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        log_file_path = os.path.join(dir_path, 'logs', 'moderation_log.txt')
+        log_file_path = os.path.join('/app', 'logs', 'moderation_log.txt')
         with open(log_file_path, 'r') as file:
             for line in file:
                 if line.startswith("Assigned roles:"):
