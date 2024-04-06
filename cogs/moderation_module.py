@@ -59,7 +59,8 @@ class ModerationModule(commands.Cog):
                 mod_id BIGINT,
                 target_id BIGINT,
                 action TEXT,
-                reason TEXT
+                reason TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS member_roles (
                 id SERIAL PRIMARY KEY,
@@ -101,7 +102,7 @@ class ModerationModule(commands.Cog):
 
         role_ids = [role.id for role in roles[:3]]  # Limit to top 3 roles if more than 3 are provided
         # Save top 3 role IDs to the PostgreSQL database
-        self.save_top_roles(ctx.guild.id, role_ids)
+        await self.save_top_roles(ctx.guild.id, role_ids)
 
         roles_mentions = "\n".join([f"Role {i+1}: {role.mention}" for i, role in enumerate(roles)])
         await ctx.send(f"Staff roles for the moderator commands have been set:\n{roles_mentions}")

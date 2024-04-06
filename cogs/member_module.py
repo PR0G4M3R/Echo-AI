@@ -6,7 +6,10 @@ import pytz
 import random
 import sqlite3
 from config import member_module
+import psycopg2
 
+MDB_URL = os.getenv('MDB_URL')
+LDB_URL = os.getenv('LDB_URL')
 date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
