@@ -149,19 +149,13 @@ class ModerationModule(commands.Cog):
             # Open cursor
             cursor = self.connection.cursor()
 
-            # Check if top roles for the guild already exist
-            cursor.execute("SELECT * FROM top_roles WHERE guild_id = %s", (guild_id,))
-            existing_roles = cursor.fetchone()
+            # Build the SQL query dynamically based on the number of roles
+            placeholders = ','.join(['%s'] * len(role_ids))
+            columns = ','.join([f'role_{i}' for i in range(1, len(role_ids) + 1)])
+            query = f"INSERT INTO top_roles (guild_id, {columns}) VALUES (%s, {placeholders})"
 
-            # If top roles for the guild already exist, update them
-            if existing_roles:
-                # Update existing roles
-                cursor.execute("UPDATE top_roles SET role_1 = %s, role_2 = %s, role_3 = %s, role_4 = %s, role_5 = %s WHERE guild_id = %s",
-                            (*role_ids, guild_id))
-            else:
-                # Insert new roles
-                cursor.execute("INSERT INTO top_roles (guild_id, role_1, role_2, role_3, role_4, role_5) VALUES (%s, %s, %s, %s, %s, %s)",
-                            (guild_id, *role_ids))
+            # Execute the SQL query
+            cursor.execute(query, (guild_id, *role_ids))
 
             # Commit changes
             self.connection.commit()
@@ -169,16 +163,16 @@ class ModerationModule(commands.Cog):
             print("Error saving top roles:", e)
             self.connection.rollback()  # Rollback transaction in case of error
 
-    async def log_moderation_action(self, guild_id, mod_id, target_id, action, reason):
-        # Log moderation action to PostgreSQL database
-        timestamp = datetime.datetime.now(pytz.timezone('UTC')).strftime("%Y-%m-%d %H:%M:%S")
-        query = '''
-            INSERT INTO moderation_log (guild_id, mod_id, target_id, action, reason, timestamp)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        '''
-        values = (guild_id, mod_id, target_id, action, reason, timestamp)
-        self.cursor.execute(query, values)
-        self.connection.commit()
+        async def log_moderation_action(self, guild_id, mod_id, target_id, action, reason):
+            # Log moderation action to PostgreSQL database
+            timestamp = datetime.datetime.now(pytz.timezone('UTC')).strftime("%Y-%m-%d %H:%M:%S")
+            query = '''
+                INSERT INTO moderation_log (guild_id, mod_id, target_id, action, reason, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            '''
+            values = (guild_id, mod_id, target_id, action, reason, timestamp)
+            self.cursor.execute(query, values)
+            self.connection.commit()
 
     @commands.command(brief='Send a message to mods', name="modmail")
     @commands.cooldown(1, 900, commands.BucketType.user)  # 1 use every 900 seconds (15 minutes) per user
