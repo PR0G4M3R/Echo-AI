@@ -17,7 +17,7 @@ def is_staff():
         cursor = conn.cursor()
 
         # Fetch the staff role IDs from the MDB database
-        cursor.execute("SELECT role_1, role_2, role_3, role_4, role_5 FROM staff_roles WHERE guild_id = %s", (ctx.guild.id,))
+        cursor.execute("SELECT role_1, role_2, role_3, role_4, role_5 FROM top_roles WHERE guild_id = %s", (ctx.guild.id,))
         row = cursor.fetchone()
         conn.close()
 
@@ -113,23 +113,23 @@ class levelModule(commands.Cog):
         if not message.author.bot:  # Check if the message is not from a bot
             await self.update_user_xp(message.author.id, 1)
 
-     async def get_staff_roles(self, guild_id):
+     async def get_top_roles(self, guild_id):
         # Retrieve staff roles from the moderation database
-        staff_roles = []
-        self.mdb_cursor.execute('SELECT role_id FROM staff_roles WHERE guild_id = %s', (guild_id,))
+        top_roles = []
+        self.mdb_cursor.execute('SELECT role_id FROM top_roles WHERE guild_id = %s', (guild_id,))
         rows = self.mdb_cursor.fetchall()
         for row in rows:
-            staff_roles.append(row[0])
-        return staff_roles
+            top_roles.append(row[0])
+        return top_roles
 
      @commands.command()
      @is_staff()
      async def toggle(self, ctx):
         guild_id = ctx.guild.id
-        staff_roles = await self.get_staff_roles(guild_id)
+        top_roles = await self.get_top_roles(guild_id)
         
         # Check if the user invoking the command has any of the staff roles
-        if any(role in [r.id for r in ctx.author.roles] for role in staff_roles):
+        if any(role in [r.id for r in ctx.author.roles] for role in top_roles):
             # User has staff roles
             # Toggle leveling system in the current server
             self.ldb_cursor.execute('SELECT enabled FROM leveling_enabled WHERE guild_id = %s', (guild_id,))
@@ -155,8 +155,8 @@ class levelModule(commands.Cog):
     @is_staff()
     async def set_levelup_channel(self, ctx, channel: discord.TextChannel):
         # Check if the user invoking the command has any of the staff roles
-        staff_roles = await self.get_staff_roles(ctx.guild.id)
-        if any(role in [r.id for r in ctx.author.roles] for role in staff_roles):
+        top_roles = await self.get_top_roles(ctx.guild.id)
+        if any(role in [r.id for r in ctx.author.roles] for role in top_roles):
             # User has staff roles, proceed with setting the level up channel
             self.ldb_cursor.execute('''
                 INSERT INTO levelup_channels (guild_id, channel_id)

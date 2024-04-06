@@ -22,7 +22,7 @@ def is_staff():
         cursor = conn.cursor()
 
         # Fetch the staff role IDs from the MDB database
-        cursor.execute("SELECT role_1, role_2, role_3, role_4, role_5 FROM staff_roles WHERE guild_id = %s", (ctx.guild.id,))
+        cursor.execute("SELECT role_1, role_2, role_3, role_4, role_5 FROM top_roles WHERE guild_id = %s", (ctx.guild.id,))
         row = cursor.fetchone()
         conn.close()
 
