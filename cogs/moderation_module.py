@@ -68,6 +68,13 @@ class ModerationModule(commands.Cog):
                 member_id BIGINT,
                 role_ids BIGINT[]  -- Array of role IDs
             );
+            CREATE TABLE top_roles (
+                id SERIAL PRIMARY KEY,
+                guild_id BIGINT,
+                role_1 BIGINT,
+                role_2 BIGINT,
+                -- Add additional columns as needed
+            );
         ''')
         self.connection.commit()
 
