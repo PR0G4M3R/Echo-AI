@@ -34,6 +34,34 @@ def is_staff():
         return False
     return commands.check(predicate)
 
+async def update_welcome_channel_data_type():
+    try:
+        # Retrieve the database URL from the environment variable
+        database_url = os.getenv('MeDB_URL')
+
+        # Establish a connection to the database
+        conn = psycopg2.connect(database_url)
+
+        # Create a cursor object
+        cur = conn.cursor()
+
+        # Alter the data type of the welcome_channel_id column to BIGINT
+        cur.execute("""
+            ALTER TABLE server_settings
+            ALTER COLUMN welcome_channel_id TYPE BIGINT;
+        """)
+
+        # Commit the changes to the database
+        conn.commit()
+        print("Data type of welcome_channel_id column updated successfully.")
+    except psycopg2.Error as e:
+        print("Error updating data type:", e)
+        conn.rollback()  # Rollback the transaction in case of an error
+        
+update_welcome_channel_data_type()
+
+
+
 # Modify the create_database function to include error handling
 def create_database():
     try:
@@ -369,3 +397,4 @@ class memberModule(commands.Cog):
 
 def setup(bot):
     bot.add_cog(memberModule(bot))
+    
