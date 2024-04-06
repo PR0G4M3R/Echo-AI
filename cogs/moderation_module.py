@@ -18,6 +18,23 @@ date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
 
+async def alter_table(self):
+    try:
+        # Open cursor
+        cursor = self.connection.cursor()
+
+        # Execute ALTER TABLE statement to add a unique constraint
+        cursor.execute("ALTER TABLE top_roles ADD CONSTRAINT guild_id_unique UNIQUE (guild_id)")
+
+        # Commit changes
+        self.connection.commit()
+    except psycopg2.Error as e:
+        print("Error altering table:", e)
+        self.connection.rollback()  # Rollback transaction in case of error
+    finally:
+        # Close cursor
+        cursor.close()
+
 def is_staff():
     async def predicate(ctx):
         # Retrieve the database URL for the staff roles from the environment variable
