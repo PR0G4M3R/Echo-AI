@@ -18,22 +18,7 @@ date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
 
-async def alter_table(self):
-    try:
-        # Open cursor
-        cursor = self.connection.cursor()
 
-        # Execute ALTER TABLE statement to add a unique constraint
-        cursor.execute("ALTER TABLE top_roles ADD CONSTRAINT guild_id_unique UNIQUE (guild_id)")
-
-        # Commit changes
-        self.connection.commit()
-    except psycopg2.Error as e:
-        print("Error altering table:", e)
-        self.connection.rollback()  # Rollback transaction in case of error
-    finally:
-        # Close cursor
-        cursor.close()
 
 def is_staff():
     async def predicate(ctx):
@@ -160,16 +145,29 @@ class ModerationModule(commands.Cog):
         await self.log_moderation_action(ctx.guild.id, ctx.author.id, ctx.author.id, "Setup Roles", "Roles were setup")
 
     async def save_top_roles(self, guild_id, role_ids):
-        # Save top 3 role IDs to PostgreSQL database
-        query = '''
-            INSERT INTO top_roles (guild_id, role_1, role_2, role_3)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (guild_id)
-            DO UPDATE SET role_1 = EXCLUDED.role_1, role_2 = EXCLUDED.role_2, role_3 = EXCLUDED.role_3
-        '''
-        values = (guild_id, *role_ids, *[None] * (3 - len(role_ids)))  # Fill with None if less than 3 roles provided
-        self.cursor.execute(query, values)
-        self.connection.commit()
+        try:
+            # Open cursor
+            cursor = self.connection.cursor()
+
+            # Check if top roles for the guild already exist
+            cursor.execute("SELECT * FROM top_roles WHERE guild_id = %s", (guild_id,))
+            existing_roles = cursor.fetchone()
+
+            # If top roles for the guild already exist, update them
+            if existing_roles:
+                # Update existing roles
+                cursor.execute("UPDATE top_roles SET role_1 = %s, role_2 = %s, role_3 = %s, role_4 = %s, role_5 = %s WHERE guild_id = %s",
+                            (*role_ids, guild_id))
+            else:
+                # Insert new roles
+                cursor.execute("INSERT INTO top_roles (guild_id, role_1, role_2, role_3, role_4, role_5) VALUES (%s, %s, %s, %s, %s, %s)",
+                            (guild_id, *role_ids))
+
+            # Commit changes
+            self.connection.commit()
+        except psycopg2.Error as e:
+            print("Error saving top roles:", e)
+            self.connection.rollback()  # Rollback transaction in case of error
 
     async def log_moderation_action(self, guild_id, mod_id, target_id, action, reason):
         # Log moderation action to PostgreSQL database
