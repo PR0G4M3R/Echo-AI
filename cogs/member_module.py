@@ -71,6 +71,7 @@ def create_database():
         if conn:
             conn.close()
 
+
 # Modify the save_server_settings function to include error handling
 def save_server_settings(self):
     try:
@@ -290,7 +291,7 @@ class memberModule(commands.Cog):
             SET {setting_name} = %s
             WHERE guild_id = %s;
         """, (setting_value, guild_id))
-
+    
         conn.commit()
         conn.close()
 

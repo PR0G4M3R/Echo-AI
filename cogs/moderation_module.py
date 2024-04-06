@@ -105,6 +105,23 @@ class ModerationModule(commands.Cog):
             print("Error creating tables:", e)
             self.connection.rollback()  # Rollback transaction in case of error
 
+    async def log_moderation_action(self, guild_id, mod_id, target_id, action, reason):
+        try:
+            # Open cursor
+            cursor = self.connection.cursor()
+
+            # Execute INSERT statement to log the moderation action
+            cursor.execute("""
+                INSERT INTO moderation_log (guild_id, mod_id, target_id, action, reason)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (guild_id, mod_id, target_id, action, reason))
+
+            # Commit changes
+            self.connection.commit()
+        except psycopg2.Error as e:
+            print("Error logging moderation action:", e)
+            self.connection.rollback()  # Rollback transaction in case of error
+
     async def get_stored_roles(self, member):
     # Connect to your database
         self.cursor.execute("SELECT role_ids FROM member_roles WHERE member_id = %s AND guild_id = %s", (member.id, member.guild.id))
