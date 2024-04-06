@@ -9,9 +9,29 @@ from config import member_module
 import psycopg2
 
 MeDB_URL = os.getenv('MeDB_URL')
+MDB_URL = os.getenv('MDB_URL')
 date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
+
+def is_staff():
+    async def predicate(ctx):
+        # Retrieve the database URL for the staff roles from the environment variable
+        # Establish a connection to the MDB database
+        conn = psycopg2.connect(MDB_URL)
+        cursor = conn.cursor()
+
+        # Fetch the staff role IDs from the MDB database
+        cursor.execute("SELECT role_1, role_2, role_3, role_4, role_5 FROM staff_roles WHERE guild_id = %s", (ctx.guild.id,))
+        row = cursor.fetchone()
+        conn.close()
+
+        # Check if the member has one of the staff roles
+        if row:
+            staff_role_ids = [role_id for role_id in row if role_id]
+            return any(role.id in staff_role_ids for role in ctx.author.roles)
+        return False
+    return commands.check(predicate)
 
 def create_database():
     # Retrieve the database URL from the environment variable
@@ -70,7 +90,6 @@ MEMBER_MODULE_COMMANDS = [
 class memberModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.welcome_channels = {}  # Dictionary to store welcome channel IDs for each server
         self.dm_enabled = False
         self.custom_thumbnail_url = None
         self.custom_image_url = None
@@ -78,69 +97,109 @@ class memberModule(commands.Cog):
         self.load_server_settings()
 
     def load_server_settings(self):
-        conn = sqlite3.connect("server_settings.db")
+        # Retrieve the database URL from the environment variable
+        database_url = os.getenv('MeDB_URL')
+
+        # Establish a connection to the database
+        conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
 
+        # Fetch the server settings from the database
         cursor.execute("SELECT guild_id, welcome_channel_id, dm_enabled, custom_thumbnail_url, custom_image_url, use_embed FROM server_settings")
         rows = cursor.fetchall()
 
+        # Store the fetched data in instance variables
         for row in rows:
             guild_id, welcome_channel_id, dm_enabled, custom_thumbnail_url, custom_image_url, use_embed = row
-            self.welcome_channels[guild_id] = welcome_channel_id
             self.dm_enabled = dm_enabled
             self.custom_thumbnail_url = custom_thumbnail_url
             self.custom_image_url = custom_image_url
             self.use_embed = bool(use_embed)
 
+            # Update the welcome channel for the guild
+            if welcome_channel_id is not None:
+                self.bot.get_guild(guild_id).welcome_channel_id = welcome_channel_id
+
         conn.close()
 
     def save_server_settings(self):
-        conn = sqlite3.connect("server_settings.db")
+        # Retrieve the database URL from the environment variable
+        database_url = os.getenv('MeDB_URL')
+
+        # Establish a connection to the database
+        conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
 
         # Clear the existing data in the table
         cursor.execute("DELETE FROM server_settings")
 
-        # Save the current server settings
-        for guild_id, welcome_channel_id in self.welcome_channels.items():
+        # Iterate over all guilds the bot is part of and save their settings
+        for guild in self.bot.guilds:
+            welcome_channel_id = getattr(guild, 'welcome_channel_id', None)
             dm_enabled = int(self.dm_enabled)  # Convert bool to integer for storage
             use_embed = int(self.use_embed)    # Convert bool to integer for storage
 
+            # Insert the server settings into the database
             cursor.execute("""
                 INSERT INTO server_settings (guild_id, welcome_channel_id, dm_enabled, custom_thumbnail_url, custom_image_url, use_embed)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (guild_id, welcome_channel_id, dm_enabled, self.custom_thumbnail_url, self.custom_image_url, use_embed))
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (guild.id, welcome_channel_id, dm_enabled, self.custom_thumbnail_url, self.custom_image_url, use_embed))
 
         conn.commit()
         conn.close()
+
+    def log_to_database(self, guild_id, log_message):
+        # Retrieve the database URL from the environment variable
+        database_url = os.getenv('MeDB_URL')
+
+        # Establish a connection to the database
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+
+        # Insert the log message into the member_logs table
+        cursor.execute("""
+            INSERT INTO member_logs (guild_id, log_message, log_time)
+            VALUES (%s, %s, %s)
+        """, (guild_id, log_message, datetime.now()))
+
+        conn.commit()
+        conn.close()
+
+    @commands.Cog.listener()
+    async def on_member_update(self, before, after):
+        if before.display_name != after.display_name:
+            log_message = "User {} changed display name from {} to {}".format(str(after), before.display_name, after.display_name)
+            self.log_to_database(after.guild.id, log_message)
+
+        elif before.roles != after.roles:
+            log_message = "User {}'s roles changed from {} to {}".format(str(after), before.roles, after.roles)
+            self.log_to_database(after.guild.id, log_message)
 
     def cog_unload(self):
         # Save server settings when the cog is unloaded (bot shutdown)
         self.save_server_settings()
 
-    @commands.Cog.listener()
-    async def on_member_update(self, before, after):
-        if member_module:
-            if before.display_name != after.display_name:
-                file = open('logs/member_log.txt', 'a')
-                file.write(f'{date_str}, {time_str}\n')
-                file.write("User {} changed display name from {} to {}\n".format(str(after), before.display_name, after.display_name))
-                file.close()
+    async def get_welcome_channel_id(self, guild_id):
+        # Retrieve the database URL from the environment variable
+        database_url = os.getenv('MeDB_URL')
 
-            elif before.roles != after.roles:
-                file = open('logs/member_log.txt', 'a')
-                file.write(f'{date_str}, {time_str}\n')
-                file.write("User {}'s roles changed from {} to {}\n".format(str(after), before.roles, after.roles))
-                file.close()
+        # Establish a connection to the database
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+
+        # Fetch the welcome channel ID from the database
+        cursor.execute("SELECT welcome_channel_id FROM server_settings WHERE guild_id = %s", (guild_id,))
+        row = cursor.fetchone()
+
+        conn.close()
+        return row[0] if row else None
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
         welcomemsgs = ('Enjoy your stay!', 'Did you bring the party with you?', 'We hope you brought pizza.', 'Why hello there!')
         welcomemsg = random.choice(welcomemsgs)
-        goodbyemsgs = ('We`re gonna miss you!', 'Goodbye!', 'Why are you running?')
-        goodbyemsg = random.choice(goodbyemsgs)
 
-        welcome_channel_id = self.welcome_channels.get(member.guild.id)
+        welcome_channel_id = await self.get_welcome_channel_id(member.guild.id)
 
         if welcome_channel_id:
             welcome_channel = self.bot.get_channel(welcome_channel_id)
@@ -165,69 +224,90 @@ class memberModule(commands.Cog):
         goodbyemsgs = ('We`re gonna miss you!', 'Goodbye!', 'Why are you running?')
         goodbyemsg = random.choice(goodbyemsgs)
 
-        welcome_channel_id = self.welcome_channels.get(member.guild.id)
+        welcome_channel_id = await self.get_welcome_channel_id(member.guild.id)
 
         if welcome_channel_id:
             welcome_channel = self.bot.get_channel(welcome_channel_id)
             await welcome_channel.send(f"{goodbyemsg} {member.mention}!")
+            
+    async def update_server_setting(self, guild_id, setting_name, setting_value):
+        # Retrieve the database URL from the environment variable
+        database_url = os.getenv('MeDB_URL')
+
+        # Establish a connection to the database
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+
+        # Update the specific server setting in the database
+        cursor.execute(f"""
+            UPDATE server_settings
+            SET {setting_name} = %s
+            WHERE guild_id = %s;
+        """, (setting_value, guild_id))
+
+        conn.commit()
+        conn.close()
 
     @commands.command(brief="Set the channel for welcome & goodbye messages.", name="setwc")
-    @is_owner_or_admin()
+    @is_staff()
     async def setwc(self, ctx, channel: discord.TextChannel = None):
         if channel is None:
-            self.welcome_channels.pop(ctx.guild.id, None)
+            await self.update_server_setting(ctx.guild.id, 'welcome_channel_id', None)
             await ctx.send("Welcome channel has been reset.")
         else:
-            self.welcome_channels[ctx.guild.id] = channel.id
+            await self.update_server_setting(ctx.guild.id, 'welcome_channel_id', channel.id)
             await ctx.send(f"Welcome channel has been set to {channel.mention}.")
 
-        # Save the server settings after changing the welcome channel
-        self.save_server_settings()
-
     @commands.command(brief="Enable or disable DMs for welcome messages.", name="setdm")
-    @is_owner_or_admin()
+    @is_staff()
     async def setdm(self, ctx, state: bool):
-        self.dm_enabled = state
+        await self.update_server_setting(ctx.guild.id, 'dm_enabled', state)
         await ctx.send(f"DM for welcome messages has been {'enabled' if state else 'disabled'}.")
 
-        # Save the server settings after changing the DM state
-        self.save_server_settings()
-
     @commands.command(brief="Set custom thumbnail URL for welcome messages.", name="setthumbnail")
-    @is_owner_or_admin()
+    @is_staff()
     async def setthumbnail(self, ctx, thumbnail_url: str = None):
-        self.custom_thumbnail_url = thumbnail_url
-        await ctx.send(f"Custom thumbnail URL has been set to {thumbnail_url}.")
-
-        # Save the server settings after changing the thumbnail URL
-        self.save_server_settings()
+        await self.update_server_setting(ctx.guild.id, 'custom_thumbnail_url', thumbnail_url)
+        await ctx.send(f"Custom thumbnail URL has been {'reset' if thumbnail_url is None else 'set to ' + thumbnail_url}.")
 
     @commands.command(brief="Set custom image URL for welcome messages.", name="setimage")
-    @is_owner_or_admin()
+    @is_staff()
     async def setimage(self, ctx, image_url: str = None):
-        self.custom_image_url = image_url
-        await ctx.send(f"Custom image URL has been set to {image_url}.")
-
-        # Save the server settings after changing the image URL
-        self.save_server_settings()
+        await self.update_server_setting(ctx.guild.id, 'custom_image_url', image_url)
+        await ctx.send(f"Custom image URL has been {'reset' if image_url is None else 'set to ' + image_url}.")
 
     @commands.command(brief="Toggle using embeds for welcome messages.", name="setembed")
-    @is_owner_or_admin()
+    @is_staff()
     async def setembed(self, ctx, state: bool):
-        self.use_embed = state
+        await self.update_server_setting(ctx.guild.id, 'use_embed', state)
         await ctx.send(f"Using embeds for welcome messages has been {'enabled' if state else 'disabled'}.")
-
-        # Save the server settings after changing the embed state
-        self.save_server_settings()
 
     @commands.command(brief="Show the current welcome settings.", name="welsets")
     async def welsets(self, ctx):
-        welcome_channel_id = self.welcome_channels.get(ctx.guild.id)
-        welcome_channel_mention = ctx.guild.get_channel(welcome_channel_id).mention if welcome_channel_id else "Not set"
-        dm_status = "Enabled" if self.dm_enabled else "Disabled"
-        thumbnail_url = self.custom_thumbnail_url if self.custom_thumbnail_url else "Not set"
-        image_url = self.custom_image_url if self.custom_image_url else "Not set"
-        embed_status = "Enabled" if self.use_embed else "Disabled"
+        # Retrieve the database URL from the environment variable
+        database_url = os.getenv('MeDB_URL')
+
+        # Establish a connection to the database
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+
+        # Fetch the server settings from the database
+        cursor.execute("SELECT welcome_channel_id, dm_enabled, custom_thumbnail_url, custom_image_url, use_embed FROM server_settings WHERE guild_id = %s", (ctx.guild.id,))
+        row = cursor.fetchone()
+
+        if row:
+            welcome_channel_id, dm_enabled, custom_thumbnail_url, custom_image_url, use_embed = row
+            welcome_channel_mention = ctx.guild.get_channel(welcome_channel_id).mention if welcome_channel_id else "Not set"
+            dm_status = "Enabled" if dm_enabled else "Disabled"
+            thumbnail_url = custom_thumbnail_url if custom_thumbnail_url else "Not set"
+            image_url = custom_image_url if custom_image_url else "Not set"
+            embed_status = "Enabled" if use_embed else "Disabled"
+        else:
+            welcome_channel_mention = "Not set"
+            dm_status = "Disabled"
+            thumbnail_url = "Not set"
+            image_url = "Not set"
+            embed_status = "Disabled"
 
         embed = discord.Embed(title="Current Welcome Settings", color=ctx.author.color)
         embed.add_field(name="Welcome Channel", value=welcome_channel_mention, inline=False)
@@ -237,6 +317,8 @@ class memberModule(commands.Cog):
         embed.add_field(name="Use Embeds for Welcome Messages", value=embed_status, inline=False)
 
         await ctx.send(embed=embed)
+
+        conn.close()
 
 def setup(bot):
     bot.add_cog(memberModule(bot))

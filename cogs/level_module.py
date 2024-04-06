@@ -9,6 +9,25 @@ import psycopg2
 MDB_URL = os.getenv('MDB_URL')
 LDB_URL = os.getenv('LDB_URL')
 
+def is_staff():
+    async def predicate(ctx):
+        # Retrieve the database URL for the staff roles from the environment variable
+        # Establish a connection to the MDB database
+        conn = psycopg2.connect(MDB_URL)
+        cursor = conn.cursor()
+
+        # Fetch the staff role IDs from the MDB database
+        cursor.execute("SELECT role_1, role_2, role_3, role_4, role_5 FROM staff_roles WHERE guild_id = %s", (ctx.guild.id,))
+        row = cursor.fetchone()
+        conn.close()
+
+        # Check if the member has one of the staff roles
+        if row:
+            staff_role_ids = [role_id for role_id in row if role_id]
+            return any(role.id in staff_role_ids for role in ctx.author.roles)
+        return False
+    return commands.check(predicate)
+
 class levelCommandInfo():
     catname = "Leveling"
     catnumber = 6
@@ -104,6 +123,7 @@ class levelModule(commands.Cog):
         return staff_roles
 
      @commands.command()
+     @is_staff()
      async def toggle(self, ctx):
         guild_id = ctx.guild.id
         staff_roles = await self.get_staff_roles(guild_id)
@@ -132,6 +152,7 @@ class levelModule(commands.Cog):
         await ctx.send(f"{user.display_name} is at level {level}.")
 
     @commands.command()
+    @is_staff()
     async def set_levelup_channel(self, ctx, channel: discord.TextChannel):
         # Check if the user invoking the command has any of the staff roles
         staff_roles = await self.get_staff_roles(ctx.guild.id)

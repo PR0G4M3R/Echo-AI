@@ -18,6 +18,25 @@ date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
 
+def is_staff():
+    async def predicate(ctx):
+        # Retrieve the database URL for the staff roles from the environment variable
+        # Establish a connection to the MDB database
+        conn = psycopg2.connect(MDB_URL)
+        cursor = conn.cursor()
+
+        # Fetch the staff role IDs from the MDB database
+        cursor.execute("SELECT role_1, role_2, role_3, role_4, role_5 FROM staff_roles WHERE guild_id = %s", (ctx.guild.id,))
+        row = cursor.fetchone()
+        conn.close()
+
+        # Check if the member has one of the staff roles
+        if row:
+            staff_role_ids = [role_id for role_id in row if role_id]
+            return any(role.id in staff_role_ids for role in ctx.author.roles)
+        return False
+    return commands.check(predicate)
+
 def is_guild_owner():
     async def predicate(ctx):
         return ctx.author == ctx.guild.owner
@@ -187,7 +206,7 @@ class ModerationModule(commands.Cog):
     
     # Mute command
     @commands.command(brief="Mute members", name="mute")
-    @commands.has_permissions(manage_roles=True)
+    @is_staff()
     async def mute(self, ctx, member: discord.Member = None, duration: str = None, *, reason: str = "No reason provided."):
         if member is None:
             await ctx.send("Please mention a member to mute.")
@@ -218,7 +237,7 @@ class ModerationModule(commands.Cog):
                 await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Mute expired")
     # Unmute command
     @commands.command(brief="Unmute members", name="unmute")
-    @commands.has_permissions(manage_roles=True)
+    @is_staff()
     async def unmute(self, ctx, member: discord.Member = None):
         if member is None:
             await ctx.send("Please mention a member to unmute.")
@@ -241,7 +260,7 @@ class ModerationModule(commands.Cog):
         await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Manual unmute")
 
     @commands.command(brief="Kick members", name="kick")
-    @commands.has_permissions(kick_members=True)
+    @is_staff()
     async def kick(self, ctx, member: discord.Member = None, *, reason: str = "No reason provided."):
         if member is None:
             await ctx.send("Please mention a member to kick.")
@@ -258,7 +277,7 @@ class ModerationModule(commands.Cog):
     
     # Ban command
     @commands.command(brief='This bans a user.', name="ban")
-    @commands.has_permissions(ban_members=True)
+    @is_staff()
     @is_guild_owner()
     async def ban(self, ctx, member: discord.Member, *, reason: str = "No reason provided."):
         try:
@@ -272,7 +291,7 @@ class ModerationModule(commands.Cog):
 
     # Unban command
     @commands.command(brief='This unbans a user.', name="unban")
-    @commands.has_permissions(ban_members=True)
+    @is_staff()
     @is_guild_owner()
     async def unban(self, ctx, *, member_id: int):
         try:
@@ -291,7 +310,7 @@ class ModerationModule(commands.Cog):
             await ctx.send("An error occurred while trying to unban the member.")
 
     @commands.command(name='setlogchannel')
-    @commands.has_permissions(administrator=True)
+    @is_staff()
     async def set_log_channel(self, ctx, channel: discord.TextChannel):
         # Check if the user is the guild owner
         if ctx.author == ctx.guild.owner:
