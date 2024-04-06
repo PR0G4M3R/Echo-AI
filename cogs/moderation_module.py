@@ -102,9 +102,6 @@ class ModerationModule(commands.Cog):
         except psycopg2.Error as e:
             print("Error creating tables:", e)
             self.connection.rollback()  # Rollback transaction in case of error
-        finally:
-            # Close cursor (and connection if necessary)
-            self.cursor.close()
 
     async def get_stored_roles(self, member):
     # Connect to your database
