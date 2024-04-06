@@ -57,9 +57,6 @@ async def update_welcome_channel_data_type():
     except psycopg2.Error as e:
         print("Error updating data type:", e)
         conn.rollback()  # Rollback the transaction in case of an error
-        
-update_welcome_channel_data_type()
-
 
 
 # Modify the create_database function to include error handling
@@ -392,7 +389,7 @@ class memberModule(commands.Cog):
         embed.add_field(name="Use Embeds for Welcome Messages", value=embed_status, inline=False)
 
         await ctx.send(embed=embed)
-
+        await update_welcome_channel_data_type()
         conn.close()
 
 def setup(bot):
