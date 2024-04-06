@@ -61,12 +61,11 @@ class ModerationModule(commands.Cog):
                 action TEXT,
                 reason TEXT
             );
-
             CREATE TABLE IF NOT EXISTS member_roles (
                 id SERIAL PRIMARY KEY,
                 guild_id BIGINT,
                 member_id BIGINT,
-                role_ids BIGINT[]  # Array of role IDs
+                role_ids BIGINT[]  -- Array of role IDs
             );
         ''')
         self.connection.commit()
