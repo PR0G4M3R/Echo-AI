@@ -49,8 +49,8 @@ def create_database():
         # Execute the SQL command to create the server_settings table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS server_settings (
-                guild_id INTEGER PRIMARY KEY,
-                welcome_channel_id INTEGER,
+                guild_id BIGINT PRIMARY KEY,
+                welcome_channel_id BIGINT,
                 dm_enabled INTEGER,
                 custom_thumbnail_url TEXT,
                 custom_image_url TEXT,
