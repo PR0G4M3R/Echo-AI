@@ -7,6 +7,7 @@ import random
 import sqlite3
 from config import member_module
 import psycopg2
+import traceback
 
 MeDB_URL = os.getenv('MeDB_URL')
 MDB_URL = os.getenv('MDB_URL')
@@ -33,34 +34,79 @@ def is_staff():
         return False
     return commands.check(predicate)
 
+# Modify the create_database function to include error handling
 def create_database():
-    # Retrieve the database URL from the environment variable
-    database_url = MeDB_URL
+    try:
+        # Retrieve the database URL from the environment variable
+        database_url = MeDB_URL
 
-    # Establish a connection to the database
-    conn = psycopg2.connect(database_url)
+        # Establish a connection to the database
+        conn = psycopg2.connect(database_url)
 
-    # Create a cursor object
-    cur = conn.cursor()
+        # Create a cursor object
+        cur = conn.cursor()
 
-    # Execute the SQL command to create the server_settings table
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS server_settings (
-            guild_id INTEGER PRIMARY KEY,
-            welcome_channel_id INTEGER,
-            dm_enabled INTEGER,
-            custom_thumbnail_url TEXT,
-            custom_image_url TEXT,
-            use_embed INTEGER
-        )
-    """)
+        # Execute the SQL command to create the server_settings table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS server_settings (
+                guild_id INTEGER PRIMARY KEY,
+                welcome_channel_id INTEGER,
+                dm_enabled INTEGER,
+                custom_thumbnail_url TEXT,
+                custom_image_url TEXT,
+                use_embed INTEGER
+            )
+        """)
 
-    # Commit the changes to the database
-    conn.commit()
+        # Commit the changes to the database
+        conn.commit()
+    except psycopg2.Error as e:
+        print("Error creating database:", e)
+        traceback.print_exc()  # Print traceback for debugging purposes
+        conn.rollback()  # Rollback the transaction in case of an error
+    finally:
+        # Close the cursor and the connection
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
-    # Close the cursor and the connection
-    cur.close()
-    conn.close()
+# Modify the save_server_settings function to include error handling
+def save_server_settings(self):
+    try:
+        # Retrieve the database URL from the environment variable
+        database_url = os.getenv('MeDB_URL')
+
+        # Establish a connection to the database
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+
+        # Clear the existing data in the table
+        cursor.execute("DELETE FROM server_settings")
+
+        # Iterate over all guilds the bot is part of and save their settings
+        for guild in self.bot.guilds:
+            welcome_channel_id = getattr(guild, 'welcome_channel_id', None)
+            dm_enabled = int(self.dm_enabled)  # Convert bool to integer for storage
+            use_embed = int(self.use_embed)    # Convert bool to integer for storage
+
+            # Insert the server settings into the database
+            cursor.execute("""
+                INSERT INTO server_settings (guild_id, welcome_channel_id, dm_enabled, custom_thumbnail_url, custom_image_url, use_embed)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (guild.id, welcome_channel_id, dm_enabled, self.custom_thumbnail_url, self.custom_image_url, use_embed))
+
+        conn.commit()
+    except psycopg2.Error as e:
+        print("Error saving server settings:", e)
+        traceback.print_exc()  # Print traceback for debugging purposes
+        conn.rollback()  # Rollback the transaction in case of an error
+    finally:
+        # Close the cursor and the connection
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 def is_owner_or_admin():
     async def predicate(ctx):
