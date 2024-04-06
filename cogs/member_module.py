@@ -8,18 +8,23 @@ import sqlite3
 from config import member_module
 import psycopg2
 
-MDB_URL = os.getenv('MDB_URL')
-LDB_URL = os.getenv('LDB_URL')
+MeDB_URL = os.getenv('MeDB_URL')
 date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
 
 def create_database():
-    conn = sqlite3.connect("server_settings.db")
-    cursor = conn.cursor()
+    # Retrieve the database URL from the environment variable
+    database_url = MeDB_URL
 
-    # Create the table to store server settings if it doesn't exist
-    cursor.execute("""
+    # Establish a connection to the database
+    conn = psycopg2.connect(database_url)
+
+    # Create a cursor object
+    cur = conn.cursor()
+
+    # Execute the SQL command to create the server_settings table
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS server_settings (
             guild_id INTEGER PRIMARY KEY,
             welcome_channel_id INTEGER,
@@ -30,7 +35,11 @@ def create_database():
         )
     """)
 
+    # Commit the changes to the database
     conn.commit()
+
+    # Close the cursor and the connection
+    cur.close()
     conn.close()
 
 def is_owner_or_admin():

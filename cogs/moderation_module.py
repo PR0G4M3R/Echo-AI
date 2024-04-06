@@ -73,7 +73,9 @@ class ModerationModule(commands.Cog):
                 guild_id BIGINT,
                 role_1 BIGINT,
                 role_2 BIGINT,
-                -- Add additional columns as needed
+                role_3 BIGINT,
+                role_4 BIGINT,
+                role_5 BIGINT
             );
         ''')
         self.connection.commit()
