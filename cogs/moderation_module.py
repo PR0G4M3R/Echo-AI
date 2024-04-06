@@ -70,34 +70,41 @@ class ModerationModule(commands.Cog):
         asyncio.create_task(self.create_tables())
 
     async def create_tables(self):
-    # Create tables if they don't exist in the moderation database
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS moderation_log (
-                id SERIAL PRIMARY KEY,
-                guild_id BIGINT,
-                mod_id BIGINT,
-                target_id BIGINT,
-                action TEXT,
-                reason TEXT,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE TABLE IF NOT EXISTS member_roles (
-                id SERIAL PRIMARY KEY,
-                guild_id BIGINT,
-                member_id BIGINT,
-                role_ids BIGINT[]  -- Array of role IDs
-            );
-            CREATE TABLE top_roles (
-                id SERIAL PRIMARY KEY,
-                guild_id BIGINT,
-                role_1 BIGINT,
-                role_2 BIGINT,
-                role_3 BIGINT,
-                role_4 BIGINT,
-                role_5 BIGINT
-            );
-        ''')
-        self.connection.commit()
+        try:
+            # Create tables if they don't exist in the moderation database
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS moderation_log (
+                    id SERIAL PRIMARY KEY,
+                    guild_id BIGINT,
+                    mod_id BIGINT,
+                    target_id BIGINT,
+                    action TEXT,
+                    reason TEXT,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS member_roles (
+                    id SERIAL PRIMARY KEY,
+                    guild_id BIGINT,
+                    member_id BIGINT,
+                    role_ids BIGINT[]  -- Array of role IDs
+                );
+                CREATE TABLE IF NOT EXISTS top_roles (
+                    id SERIAL PRIMARY KEY,
+                    guild_id BIGINT,
+                    role_1 BIGINT,
+                    role_2 BIGINT,
+                    role_3 BIGINT,
+                    role_4 BIGINT,
+                    role_5 BIGINT
+                );
+            ''')
+            self.connection.commit()
+        except psycopg2.Error as e:
+            print("Error creating tables:", e)
+            self.connection.rollback()  # Rollback transaction in case of error
+        finally:
+            # Close cursor (and connection if necessary)
+            self.cursor.close()
 
     async def get_stored_roles(self, member):
     # Connect to your database
