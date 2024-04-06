@@ -4,6 +4,7 @@ import sqlite3
 import os
 import asyncio
 import os
+import psycopg2
 
 MDB_URL = os.getenv('MDB_URL')
 LDB_URL = os.getenv('LDB_URL')

@@ -8,6 +8,7 @@ import sqlite3
 import datetime
 import pytz
 import os
+import psycopg2
 from config import modmail_module
 
 # Get the DATABASE_URL environment variable from Railway
