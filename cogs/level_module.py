@@ -131,7 +131,10 @@ class levelModule(commands.Cog):
                 DO UPDATE SET level = EXCLUDED.level
             ''', (user_id, new_level))
             self.ldb_connection.commit()
-            await self.send_level_up_message
+            # Update the user's level in the database
+            await self.update_user_level(user_id, new_level)
+            # Send level-up message if applicable
+            await self.send_level_up_message(user_id, new_level)
 
     async def send_level_up_message(self, user_id, level):
     # Fetch the level-up channel ID from the database
