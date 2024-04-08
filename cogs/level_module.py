@@ -67,7 +67,7 @@ class levelModule(commands.Cog):
     async def get_top_roles(self, guild_id):
         # Retrieve staff roles from the moderation database
         top_roles = []
-        self.mdb_cursor.execute('SELECT role_id FROM top_roles WHERE guild_id = %s', (guild_id,))
+        self.mdb_cursor.execute('SELECT role_1, role_2, role_3, role_4, role_5 FROM top_roles WHERE guild_id = %s', (guild_id,))
         rows = self.mdb_cursor.fetchall()
         for row in rows:
             top_roles.append(row[0])
