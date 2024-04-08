@@ -146,7 +146,7 @@ class ModerationModule(commands.Cog):
             self.connection.commit()
 
     @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
-    @commands.is_owner()
+    @commands.is_guild_owner()
     async def setup_roles(self, ctx, *roles: discord.Role):
         if len(roles) < 1:
             return await ctx.send("Please provide at least one role.")
