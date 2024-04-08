@@ -182,6 +182,16 @@ class levelModule(commands.Cog):
             # User does not have staff roles, deny the command
             await ctx.send("You do not have permission to set the level up channel.")
 
+#New
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        # Check if the message is not sent by a bot to avoid counting bot messages
+        if not message.author.bot:
+            # Call your method to update user XP by 1
+            await self.update_user_xp(message.author.id, 1)
+
+        # Keep other message processing or commands handling if needed
+        await self.bot.process_commands(message)
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
