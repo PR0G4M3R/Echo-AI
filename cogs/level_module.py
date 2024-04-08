@@ -190,8 +190,5 @@ class levelModule(commands.Cog):
             # Call your method to update user XP by 1
             await self.update_user_xp(message.author.id, 1)
 
-        # Keep other message processing or commands handling if needed
-        await self.bot.process_commands(message)
-
 def setup(bot):
     bot.add_cog(levelModule(bot))
