@@ -38,14 +38,7 @@ def is_staff():
 
     return commands.check(predicate)
 
-async def get_top_roles(self, guild_id):
-        # Retrieve staff roles from the moderation database
-        top_roles = []
-        self.mdb_cursor.execute('SELECT role_id FROM top_roles WHERE guild_id = %s', (guild_id,))
-        rows = self.mdb_cursor.fetchall()
-        for row in rows:
-            top_roles.append(row[0])
-        return top_roles
+
 
 class levelCommandInfo():
     catname = "Leveling"
@@ -70,6 +63,15 @@ class levelModule(commands.Cog):
         self.mdb_connection = psycopg2.connect(os.getenv('MDB_URL'))
         self.mdb_cursor = self.mdb_connection.cursor()
         asyncio.create_task(self.create_tables())
+
+    async def get_top_roles(self, guild_id):
+        # Retrieve staff roles from the moderation database
+        top_roles = []
+        self.mdb_cursor.execute('SELECT role_id FROM top_roles WHERE guild_id = %s', (guild_id,))
+        rows = self.mdb_cursor.fetchall()
+        for row in rows:
+            top_roles.append(row[0])
+        return top_roles
 
     async def create_tables(self):
     # Create tables if they don't exist in the leveling database
