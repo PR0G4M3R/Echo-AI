@@ -134,18 +134,30 @@ class levelModule(commands.Cog):
             await self.send_level_up_message
 
     async def send_level_up_message(self, user_id, level):
-        # Send level-up message to the designated channel
-        # Implement this method as per your requirement
+    # Fetch the level-up channel ID from the database
+        self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (guild_id,))
+        row = self.ldb_cursor.fetchone()
+        if row:
+            channel_id = row[0]
+            # Get the channel object using the channel ID
+            channel = self.bot.get_channel(channel_id)
+            if channel:
+                # Send the level-up message to the designated channel
+                await channel.send(f"Congratulations <@{user_id}>! You've reached level {level}!")
+        else:
+            # No level-up channel defined for the guild
+            print(f"No level-up channel defined for guild {guild_id}.")
 
-     @commands.Cog.listener()
-     async def on_message(self, message):
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
         # Award 1 XP per message
         if not message.author.bot:  # Check if the message is not from a bot
             await self.update_user_xp(message.author.id, 1)
 
-     @commands.command()
-     @is_staff()
-     async def toggle(self, ctx):
+    @commands.command()
+    @is_staff()
+    async def toggle(self, ctx):
         guild_id = ctx.guild.id
         top_roles = await self.get_top_roles(guild_id)
         
