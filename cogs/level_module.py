@@ -11,22 +11,41 @@ LDB_URL = os.getenv('LDB_URL')
 
 def is_staff():
     async def predicate(ctx):
-        # Retrieve the database URL for the staff roles from the environment variable
-        # Establish a connection to the MDB database
-        conn = psycopg2.connect(MDB_URL)
-        cursor = conn.cursor()
+        try:
+            # Establish a connection to the MDB database
+            conn = psycopg2.connect(MDB_URL)
+            cursor = conn.cursor()
 
-        # Fetch the staff role IDs from the MDB database
-        cursor.execute("SELECT role_1, role_2, role_3, role_4, role_5 FROM top_roles WHERE guild_id = %s", (ctx.guild.id,))
-        row = cursor.fetchone()
-        conn.close()
+            # Fetch non-null staff role IDs from the MDB database
+            cursor.execute("""
+                SELECT role_1, role_2, role_3, role_4, role_5 
+                FROM top_roles 
+                WHERE guild_id = %s
+            """, (ctx.guild.id,))
+            row = cursor.fetchone()
+            
+            # Close the database connection
+            conn.close()
 
-        # Check if the member has one of the staff roles
-        if row:
-            staff_role_ids = [role_id for role_id in row if role_id]
-            return any(role.id in staff_role_ids for role in ctx.author.roles)
-        return False
+            # Check if the member has one of the staff roles
+            if row:
+                staff_role_ids = [role_id for role_id in row if role_id]
+                return any(role.id in staff_role_ids for role in ctx.author.roles)
+            return False
+        except Exception as e:
+            print("Error in is_staff predicate:", e)
+            return False
+
     return commands.check(predicate)
+
+async def get_top_roles(self, guild_id):
+        # Retrieve staff roles from the moderation database
+        top_roles = []
+        self.mdb_cursor.execute('SELECT role_id FROM top_roles WHERE guild_id = %s', (guild_id,))
+        rows = self.mdb_cursor.fetchall()
+        for row in rows:
+            top_roles.append(row[0])
+        return top_roles
 
 class levelCommandInfo():
     catname = "Leveling"
@@ -112,15 +131,6 @@ class levelModule(commands.Cog):
         # Award 1 XP per message
         if not message.author.bot:  # Check if the message is not from a bot
             await self.update_user_xp(message.author.id, 1)
-
-     async def get_top_roles(self, guild_id):
-        # Retrieve staff roles from the moderation database
-        top_roles = []
-        self.mdb_cursor.execute('SELECT role_id FROM top_roles WHERE guild_id = %s', (guild_id,))
-        rows = self.mdb_cursor.fetchall()
-        for row in rows:
-            top_roles.append(row[0])
-        return top_roles
 
      @commands.command()
      @is_staff()
