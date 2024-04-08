@@ -131,6 +131,7 @@ class levelModule(commands.Cog):
                 DO UPDATE SET level = EXCLUDED.level
             ''', (user_id, new_level))
             self.ldb_connection.commit()
+            await self.send_level_up_message
 
     async def send_level_up_message(self, user_id, level):
         # Send level-up message to the designated channel
