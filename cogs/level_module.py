@@ -115,15 +115,22 @@ class levelModule(commands.Cog):
         prev_level = level_row[0] if level_row else 0
         return prev_level
 
-    async def update_level(self, user_id, new_level):
-        # Update the user's level in the database
-        self.ldb_cursor.execute('''
-            INSERT INTO user_levels (user_id, level)
-            VALUES (%s, %s)
-            ON CONFLICT (user_id)
-            DO UPDATE SET level = EXCLUDED.level
-        ''', (user_id, new_level))
-        self.ldb_connection.commit()
+    async def update_level(self, user_id):
+    # Retrieve user's XP from the database
+        self.ldb_cursor.execute('SELECT xp FROM user_xp WHERE user_id = %s', (user_id,))
+        row = self.ldb_cursor.fetchone()
+        if row:
+            xp = row[0]
+            # Calculate the new level based on the user's XP (your logic may vary)
+            new_level = xp // 10  # For example, level up every 100 XP
+            # Update the user's level in the database
+            self.ldb_cursor.execute('''
+                INSERT INTO user_levels (user_id, level)
+                VALUES (%s, %s)
+                ON CONFLICT (user_id)
+                DO UPDATE SET level = EXCLUDED.level
+            ''', (user_id, new_level))
+            self.ldb_connection.commit()
 
     async def send_level_up_message(self, user_id, level):
         # Send level-up message to the designated channel
