@@ -115,7 +115,7 @@ class levelModule(commands.Cog):
         prev_level = level_row[0] if level_row else 0
         return prev_level
 
-    async def update_level(self, user_id):
+    async def update_level(self, guild_id, user_id, level):
     # Retrieve user's XP from the database
         self.ldb_cursor.execute('SELECT xp FROM user_xp WHERE user_id = %s', (user_id,))
         row = self.ldb_cursor.fetchone()
