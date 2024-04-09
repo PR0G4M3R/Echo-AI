@@ -14,6 +14,9 @@ MDB_URL = os.getenv('MDB_URL')
 date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
+full_str = f"{date_str} {time_str}"
+datetime_obj = datetime.strptime(full_str, "%m/%d/%Y %H:%M:%S")
+
 
 def is_staff():
     async def predicate(ctx):
@@ -211,8 +214,8 @@ class memberModule(commands.Cog):
         # Insert the log message into the member_logs table
         cursor.execute("""
             INSERT INTO member_logs (guild_id, log_message, log_time)
-            VALUES (%s, %s, %s)
-        """, (guild_id, log_message, date_today_PST))
+            VALUES (%H:%M:%S)
+        """, (guild_id, log_message, datetime_obj))
 
         conn.commit()
         conn.close()
