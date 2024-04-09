@@ -14,7 +14,8 @@ MDB_URL = os.getenv('MDB_URL')
 date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
-full_str = date_today_PST.strftime("%H:%M:%S %m/%d/%Y")
+full_str = date_today_PST.strftime("%Y-%m-%d %H:%M:%S")
+
 
 
 
