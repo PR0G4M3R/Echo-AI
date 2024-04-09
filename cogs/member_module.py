@@ -214,7 +214,7 @@ class memberModule(commands.Cog):
         # Insert the log message into the member_logs table
         cursor.execute("""
             INSERT INTO member_logs (guild_id, log_message, log_time)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s)
         """, (guild_id, log_message, full_str))
 
         conn.commit()
