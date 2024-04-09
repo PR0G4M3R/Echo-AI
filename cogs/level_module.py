@@ -104,7 +104,7 @@ class levelModule(commands.Cog):
             DO UPDATE SET xp = user_xp.xp + EXCLUDED.xp
         ''', (user_id, xp))
         self.ldb_connection.commit()
-        await self.update_level(user_id, new_level)
+        await self.update_level(user_id, xp, new_level)
 
     async def get_level(self, user_id):
         # Retrieve the previous level from the database

@@ -212,7 +212,7 @@ class memberModule(commands.Cog):
         cursor.execute("""
             INSERT INTO member_logs (guild_id, log_message, log_time)
             VALUES (%s, %s, %s)
-        """, (guild_id, log_message, datetime.now()))
+        """, (guild_id, log_message, date_today_PST))
 
         conn.commit()
         conn.close()
