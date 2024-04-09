@@ -14,8 +14,8 @@ MDB_URL = os.getenv('MDB_URL')
 date_today_PST = datetime.datetime.now(pytz.timezone('UTC'))
 date_str = date_today_PST.strftime("%m/%d/%Y")
 time_str = date_today_PST.strftime("%H:%M:%S")
-full_str = f"{date_str} {time_str}"
-datetime_obj = datetime.strptime(full_str, "%m/%d/%Y %H:%M:%S")
+full_str = date_today_PST.strftime("%H:%M:%S %m/%d/%Y")
+
 
 
 def is_staff():
@@ -215,7 +215,7 @@ class memberModule(commands.Cog):
         cursor.execute("""
             INSERT INTO member_logs (guild_id, log_message, log_time)
             VALUES (%H:%M:%S)
-        """, (guild_id, log_message, datetime_obj))
+        """, (guild_id, log_message, full_str))
 
         conn.commit()
         conn.close()
