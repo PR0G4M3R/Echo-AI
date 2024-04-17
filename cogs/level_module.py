@@ -95,7 +95,7 @@ class levelModule(commands.Cog):
         ''')
         self.ldb_connection.commit()
 
-    async def update_user_xp(self, guild_id, user_id, xp):
+    async def update_user_xp(self, guild_id, user_id, xp_increment):
         # Update user's XP in the leveling database
         self.ldb_cursor.execute('''
             INSERT INTO user_xp (user_id, xp)
@@ -104,7 +104,7 @@ class levelModule(commands.Cog):
             DO UPDATE SET xp = user_xp.xp + EXCLUDED.xp
         ''', (user_id, xp))
         self.ldb_connection.commit()
-        await self.update_level(guild_id, user_id, xp)
+        await self.update_level(guild_id, user_id, xp_increment)
 
     async def get_level(self, guild_id, user_id):
         # Retrieve the previous level from the database for the given guild and user
