@@ -165,13 +165,6 @@ class levelModule(commands.Cog):
             # No level-up channel defined for the guild
             print(f"No level-up channel defined for guild {guild_id}.")
 
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        # Award 1 XP per message
-        if not message.author.bot:  # Check if the message is not from a bot
-            await self.update_user_xp(message.author.id, 1)
-
     @commands.command()
     @is_staff()
     async def toggle(self, ctx):
@@ -227,7 +220,7 @@ class levelModule(commands.Cog):
             # Get the guild ID
             guild_id = message.guild.id
             # Get the level of the user who sent the message
-            user = message.author or ctx.author
+            user = message.author
             level = await self.get_level(guild_id, user.id)
             # Call your method to update user XP by 1 and pass the guild ID
             await self.update_user_xp(guild_id, user.id, 1)
