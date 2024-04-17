@@ -260,5 +260,6 @@ class levelModule(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
+
 def setup(bot):
     bot.add_cog(levelModule(bot))
