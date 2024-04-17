@@ -125,8 +125,8 @@ class levelModule(commands.Cog):
             new_level = xp // 10  # For example, level up every 100 XP
             # Update the user's level in the database
             self.ldb_cursor.execute('''
-                INSERT INTO user_levels (user_id, level)
-                VALUES (%s, %s)
+                INSERT INTO user_levels (guild id, user_id, level)
+                VALUES (%s, %s, %s)
                 ON CONFLICT (user_id)
                 DO UPDATE SET level = EXCLUDED.level
             ''', (user_id, new_level))
