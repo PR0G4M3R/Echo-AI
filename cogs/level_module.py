@@ -148,7 +148,7 @@ class levelModule(commands.Cog):
 
         # Send level-up message if applicable
         await self.send_level_up_message(guild_id, user_id, new_level)
-        
+
     async def send_level_up_message(self, user_id, level):
     # Fetch the level-up channel ID from the database
         self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (guild_id,))
@@ -244,6 +244,21 @@ class levelModule(commands.Cog):
     async def on_member_join(self, member):
         # Call the function to initialize the user's XP to zero
         await self.initialize_user_xp(member.id)
+
+    async def debug2(self, ctx):
+        # Your code to add the guild_id column to the user_levels table
+        try:
+            # Add the guild_id column to the user_levels table
+            # Replace 'your_database_name' with your actual database name
+            self.ldb_cursor.execute('''
+                ALTER TABLE user_levels
+                ADD COLUMN guild_id BIGINT;
+            ''')
+            # Commit the changes
+            self.ldb_connection.commit()
+            await ctx.send("Successfully added guild_id column to user_levels table.")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
