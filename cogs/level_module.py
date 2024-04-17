@@ -106,14 +106,15 @@ class levelModule(commands.Cog):
         self.ldb_connection.commit()
         await self.update_level(guild_id, user_id, xp)
 
-    async def get_level(self, user_id):
-        # Retrieve the previous level from the database
+    async def get_level(self, guild_id, user_id):
+        # Retrieve the previous level from the database for the given guild and user
         self.ldb_cursor.execute('''
-            SELECT level FROM user_levels WHERE user_id = %s
-        ''', (user_id,))
+            SELECT level FROM user_levels WHERE guild_id = %s AND user_id = %s
+        ''', (guild_id, user_id))
         level_row = self.ldb_cursor.fetchone()
         prev_level = level_row[0] if level_row else 0
         return prev_level
+
 
     async def update_level(self, guild_id, user_id, xp):
         # Check if user already has XP data
