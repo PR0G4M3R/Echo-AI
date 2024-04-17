@@ -132,7 +132,7 @@ class levelModule(commands.Cog):
             ''', (user_id, new_level))
             self.ldb_connection.commit()
             # Send level-up message if applicable
-            await self.send_level_up_message(user_id, new_level)
+            await self.send_level_up_message(guild_id, user_id, new_level)
 
     async def send_level_up_message(self, user_id, level):
     # Fetch the level-up channel ID from the database
