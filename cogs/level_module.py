@@ -102,7 +102,7 @@ class levelModule(commands.Cog):
             VALUES (%s, %s)
             ON CONFLICT (user_id)
             DO UPDATE SET xp = user_xp.xp + EXCLUDED.xp
-        ''', (user_id, xp))
+        ''', (user_id, xp_increment))
         self.ldb_connection.commit()
         await self.update_level(guild_id, user_id, xp_increment)
 
