@@ -220,24 +220,7 @@ class levelModule(commands.Cog):
             await ctx.send("You do not have permission to set the level up channel.")
 
 #New
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if not message.author.bot:
-        # Get the level of the user who sent the message
-            user = message.author or ctx.author
-            level = await self.get_level(user.id)
-            # Call your method to update user XP by 1 and pass the level obtained
-            await self.update_user_xp(user.id, 1, level)
-
-    async def initialize_user_xp(self, user_id):
-        # Insert the user's ID and XP of zero into the database
-        self.ldb_cursor.execute('''
-            INSERT INTO user_xp (user_id, xp)
-            VALUES (%s, %s)
-            ON CONFLICT (user_id)
-            DO NOTHING
-        ''', (user_id, 0))
-        self.ldb_connection.commit()
+    
 
     # Event listener for new member joining the server
     @commands.Cog.listener()
