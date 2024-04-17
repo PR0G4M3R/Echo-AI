@@ -207,10 +207,12 @@ class levelModule(commands.Cog):
 #New
     @commands.Cog.listener()
     async def on_message(self, message):
-        # Check if the message is not sent by a bot to avoid counting bot messages
         if not message.author.bot:
-            # Call your method to update user XP by 1
-            await self.update_user_xp(message.author.id, 1, level)
+        # Get the level of the user who sent the message
+            user = message.author or ctx.author
+            level = await self.get_level(user.id)
+            # Call your method to update user XP by 1 and pass the level obtained
+            await self.update_user_xp(user.id, 1, level)
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
