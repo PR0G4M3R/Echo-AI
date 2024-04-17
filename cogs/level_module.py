@@ -115,25 +115,40 @@ class levelModule(commands.Cog):
         prev_level = level_row[0] if level_row else 0
         return prev_level
 
-    async def update_level(self, guild_id, user_id, level):
-    # Retrieve user's XP from the database
+    async def update_level(self, guild_id, user_id, xp):
+        # Check if user already has XP data
         self.ldb_cursor.execute('SELECT xp FROM user_xp WHERE user_id = %s', (user_id,))
         row = self.ldb_cursor.fetchone()
         if row:
-            xp = row[0]
-            # Calculate the new level based on the user's XP (your logic may vary)
-            new_level = xp // 10  # For example, level up every 100 XP
-            # Update the user's level in the database
+            # User already has XP data
+            current_xp = row[0]
+            # Calculate total XP including new XP earned
+            total_xp = current_xp + xp
+            # Calculate the new level based on the total XP (your logic may vary)
+            new_level = total_xp // 10  # For example, level up every 10 XP
+            # Update the user's XP in the database
             self.ldb_cursor.execute('''
-                INSERT INTO user_levels (guild_id, user_id, level)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (user_id)
-                DO UPDATE SET level = EXCLUDED.level
-            ''', (user_id, new_level))
-            self.ldb_connection.commit()
-            # Send level-up message if applicable
-            await self.send_level_up_message(guild_id, user_id, new_level)
+                UPDATE user_xp SET xp = %s WHERE user_id = %s
+            ''', (total_xp, user_id))
+        else:
+            # User has no XP data, insert initial XP
+            self.ldb_cursor.execute('''
+                INSERT INTO user_xp (user_id, xp) VALUES (%s, %s)
+            ''', (user_id, xp))
+            new_level = xp // 10  # For example, level up every 10 XP
 
+        # Update the user's level in the database
+        self.ldb_cursor.execute('''
+            INSERT INTO user_levels (guild_id, user_id, level)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id)
+            DO UPDATE SET level = EXCLUDED.level
+        ''', (guild_id, user_id, new_level))
+        self.ldb_connection.commit()
+
+        # Send level-up message if applicable
+        await self.send_level_up_message(guild_id, user_id, new_level)
+        
     async def send_level_up_message(self, user_id, level):
     # Fetch the level-up channel ID from the database
         self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (guild_id,))
@@ -213,6 +228,22 @@ class levelModule(commands.Cog):
             level = await self.get_level(user.id)
             # Call your method to update user XP by 1 and pass the level obtained
             await self.update_user_xp(user.id, 1, level)
+
+    async def initialize_user_xp(self, user_id):
+        # Insert the user's ID and XP of zero into the database
+        self.ldb_cursor.execute('''
+            INSERT INTO user_xp (user_id, xp)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id)
+            DO NOTHING
+        ''', (user_id, 0))
+        self.ldb_connection.commit()
+
+    # Event listener for new member joining the server
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        # Call the function to initialize the user's XP to zero
+        await self.initialize_user_xp(member.id)
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
