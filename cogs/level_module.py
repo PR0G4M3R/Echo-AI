@@ -245,6 +245,8 @@ class levelModule(commands.Cog):
         # Call the function to initialize the user's XP to zero
         await self.initialize_user_xp(member.id)
 
+    @commands.command()
+    @commands.is_owner()  # Restrict this command to the bot owner
     async def debug2(self, ctx):
         # Your code to add the guild_id column to the user_levels table
         try:
