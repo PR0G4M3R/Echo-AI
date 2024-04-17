@@ -220,31 +220,30 @@ class levelModule(commands.Cog):
             await ctx.send("You do not have permission to set the level up channel.")
 
 #New
-    
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if not message.author.bot:
+        # Get the level of the user who sent the message
+            user = message.author or ctx.author
+            level = await self.get_level(user.id)
+            # Call your method to update user XP by 1 and pass the level obtained
+            await self.update_user_xp(user.id, 1, level)
+
+    async def initialize_user_xp(self, user_id):
+        # Insert the user's ID and XP of zero into the database
+        self.ldb_cursor.execute('''
+            INSERT INTO user_xp (user_id, xp)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id)
+            DO NOTHING
+        ''', (user_id, 0))
+        self.ldb_connection.commit()
 
     # Event listener for new member joining the server
     @commands.Cog.listener()
     async def on_member_join(self, member):
         # Call the function to initialize the user's XP to zero
         await self.initialize_user_xp(member.id)
-
-    @commands.command()
-    @commands.is_owner()  # Restrict this command to the bot owner
-    async def debug2(self, ctx):
-        # Your code to add the guild_id column to the user_levels table
-        try:
-            # Add the guild_id column to the user_levels table
-            # Replace 'your_database_name' with your actual database name
-            self.ldb_cursor.execute('''
-                ALTER TABLE user_levels
-                ADD COLUMN guild_id BIGINT;
-            ''')
-            # Commit the changes
-            self.ldb_connection.commit()
-            await ctx.send("Successfully added guild_id column to user_levels table.")
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
-
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
