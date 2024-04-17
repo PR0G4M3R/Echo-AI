@@ -117,7 +117,7 @@ class levelModule(commands.Cog):
 
 
     async def update_level(self, guild_id, user_id, xp):
-    # Check if user already has XP data
+        # Check if user already has XP data
         self.ldb_cursor.execute('SELECT xp FROM user_xp WHERE user_id = %s', (user_id,))
         row = self.ldb_cursor.fetchone()
         if row:
@@ -147,9 +147,11 @@ class levelModule(commands.Cog):
         ''', (guild_id, user_id, new_level))
         self.ldb_connection.commit()
 
-        # Send level-up message if applicable
-        
-        await self.send_level_up_message(guild_id, user_id, level=new_level)
+        # Check if the user leveled up
+        if new_level > (current_xp // 10):
+            # Send level-up message if the user leveled up
+            await self.send_level_up_message(guild_id, user_id, new_level)
+
 
 
     async def send_level_up_message(self, guild_id, user_id, level):
