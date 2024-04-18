@@ -119,6 +119,7 @@ class memberModule(commands.Cog):
         # Establish a connection to the database
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
+        self.server_settings = {}
 
         # Fetch the server settings from the database
         cursor.execute("SELECT guild_id, welcome_channel_id, dm_enabled, custom_thumbnail_url, custom_image_url, use_embed FROM server_settings")
@@ -139,8 +140,11 @@ class memberModule(commands.Cog):
 
             # Update the welcome channel for the guild
             if welcome_channel_id is not None:
+                # Initialize settings for guild if not already initialized
+                if guild_id not in self.server_settings:
+                    self.server_settings[guild_id] = {}
                 self.server_settings[guild_id]['welcome_channel_id'] = welcome_channel_id
-                
+
         conn.close()
 
     def save_server_settings(self):
