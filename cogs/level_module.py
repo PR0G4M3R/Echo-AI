@@ -142,7 +142,7 @@ class levelModule(commands.Cog):
                 INSERT INTO user_xp (user_id, xp) VALUES (%s, %s)
             ''', (user_id, xp))
             new_level = 1  # Start at level 1
-            required_xp = 10 + 5 * (new_level - 1)  # XP required for level 1
+            required_xp = 10 + 1 * (new_level - 1)  # XP required for level 1
         # Update the user's level in the database
         self.ldb_cursor.execute('''
             INSERT INTO user_levels (guild_id, user_id, level)
