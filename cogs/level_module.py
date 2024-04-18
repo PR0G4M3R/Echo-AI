@@ -142,6 +142,9 @@ class levelModule(commands.Cog):
             print("first check passed")
             # Send level-up message if the user leveled up
             await self.send_level_up_message(guild, user_id, level=new_level)
+        else:
+            print(new_level)
+            print(current_level)
 
 
     async def send_level_up_message(self, guild, user_id, level):
