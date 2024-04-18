@@ -142,19 +142,23 @@ class levelModule(commands.Cog):
         self.ldb_cursor.execute('SELECT level FROM user_levels WHERE user_id = %s', (user_id,))
         current_level = self.ldb_cursor.fetchone()[0] if self.ldb_cursor.rowcount > 0 else 0
         if new_level > current_level:
+            print("first check passed")
             # Send level-up message if the user leveled up
             await self.send_level_up_message(user_id, level=new_level)
 
 
     async def send_level_up_message(self, ctx, user_id, level):
         try:
+            print("second check passed")
             # Fetch the user object
             user = await self.bot.fetch_user(user_id)
             if user:
+                print("third check passed")
                 # Fetch the level-up channel ID from the database for the guild
                 self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (ctx.guild.id,))
                 row = self.ldb_cursor.fetchone()
                 if row:
+                    print("fourth check passed")
                     channel_id = row[0]
                     # Get the channel object using the channel ID
                     channel = ctx.guild.get_channel(channel_id)
@@ -166,12 +170,12 @@ class levelModule(commands.Cog):
                         await ctx.send(f"No level-up channel found for this guild.")
                 else:
                     # No level-up channel defined for the guild
-                    await ctx.send(f"No level-up channel defined for this guild.")
+                    print(f"No level-up channel defined for this guild.")
             else:
                 # User not found
-                await ctx.send(f"User with ID {user_id} not found.")
+                print(f"User with ID {user_id} not found.")
         except Exception as e:
-            await ctx.send(f"Error sending level-up message: {e}")
+            print(f"Error sending level-up message: {e}")
 
 
 
