@@ -24,7 +24,6 @@ discord.Activity(type=discord.ActivityType.listening, name='Spotify'),
 
 @bot.event
 async def on_ready():
-    create_database()
     print('Successfully logged in as {0.user}'.format(bot))
     await bot.add_cog(messageModule(bot))
     await bot.add_cog(memberModule(bot))
