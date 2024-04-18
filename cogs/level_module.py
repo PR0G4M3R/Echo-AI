@@ -95,7 +95,7 @@ class levelModule(commands.Cog):
         ''')
         self.ldb_connection.commit()
 
-    async def update_user_xp(self, user_id, xp_increment):
+    async def update_user_xp(self, ctx, user_id, xp_increment):
         # Update user's XP in the leveling database
         self.ldb_cursor.execute('''
             INSERT INTO user_xp (user_id, xp)
@@ -104,7 +104,7 @@ class levelModule(commands.Cog):
             DO UPDATE SET xp = user_xp.xp + EXCLUDED.xp
         ''', (user_id, xp_increment))
         self.ldb_connection.commit()
-        await self.update_level(user_id, xp_increment)
+        await self.update_level(ctx, user_id, xp_increment)
 
     async def get_level(self, user_id):
         # Retrieve the previous level from the database for the given guild and user
@@ -117,7 +117,7 @@ class levelModule(commands.Cog):
 
 
 
-    async def update_level(self, user_id, xp_increment):
+    async def update_level(self, ctx, user_id, xp_increment):
         # Retrieve the user's current XP
         self.ldb_cursor.execute('SELECT xp FROM user_xp WHERE user_id = %s', (user_id,))
         xp_row = self.ldb_cursor.fetchone()
@@ -145,13 +145,13 @@ class levelModule(commands.Cog):
             self.ldb_connection.commit()
 
             # Send level-up message
-            guild_id = ctx.guild.id
-            await self.send_level_up_message(guild_id, user_id, new_level)
+            await self.send_level_up_message(ctx, user_id, new_level)
 
-    async def send_level_up_message(self, guild_id, user_id, new_level):
+    async def send_level_up_message(self, ctx, user_id, new_level):
         # Fetch the user object
         user = await self.bot.fetch_user(user_id)
         if user:
+            guild_id = ctx.guild.id
             # Fetch the level-up channel ID from the database for the guild
             self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (guild_id,))
             row = self.ldb_cursor.fetchone()
@@ -226,14 +226,14 @@ class levelModule(commands.Cog):
             await ctx.send("You do not have permission to set the level up channel.")
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message, ctx):
         if not message.author.bot:
             # Get the user who sent the message
             user = message.author
             # Update user XP by 1
-            await self.update_user_xp(user.id, 1)
+            await self.update_user_xp(ctx, user.id, 1)
             # Call the method to update the user's level with the XP increment
-            await self.update_level(user.id, 1)
+            await self.update_level(ctx, user.id, 1)
 
 
     async def initialize_user_xp(self, user_id):
