@@ -147,32 +147,33 @@ class levelModule(commands.Cog):
             await self.send_level_up_message(guild, user_id, level=new_level)
 
 
-    async def send_level_up_message(self, guild, user_id, level):
+    async def send_level_up_message(self, ctx, user_id, level):
         try:
             # Fetch the user object
             user = await self.bot.fetch_user(user_id)
             if user:
                 # Fetch the level-up channel ID from the database for the guild
-                self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (guild.id,))
+                self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (ctx.guild.id,))
                 row = self.ldb_cursor.fetchone()
                 if row:
                     channel_id = row[0]
                     # Get the channel object using the channel ID
-                    channel = guild.get_channel(channel_id)
+                    channel = ctx.guild.get_channel(channel_id)
                     if channel:
                         # Send the level-up message to the designated channel
                         await channel.send(f"Congratulations <@{user_id}>! You've reached level {level}!")
                     else:
                         # No level-up channel found
-                        print(f"No level-up channel found for guild {guild.id}.")
+                        await ctx.send(f"No level-up channel found for this guild.")
                 else:
                     # No level-up channel defined for the guild
-                    print(f"No level-up channel defined for guild {guild.id}.")
+                    await ctx.send(f"No level-up channel defined for this guild.")
             else:
                 # User not found
-                print(f"User with ID {user_id} not found.")
+                await ctx.send(f"User with ID {user_id} not found.")
         except Exception as e:
-            print(f"Error sending level-up message: {e}")
+            await ctx.send(f"Error sending level-up message: {e}")
+
 
 
 
