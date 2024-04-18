@@ -129,26 +129,31 @@ class levelModule(commands.Cog):
         # Calculate the new level based on total XP
         new_level = total_xp // 10  # Assuming 10 XP is needed per level
 
-        # Update the user's XP and level in the database
+        # Update the user's XP in the database
         self.ldb_cursor.execute('''
             INSERT INTO user_xp (user_id, xp)
             VALUES (%s, %s)
             ON CONFLICT (user_id)
             DO UPDATE SET xp = EXCLUDED.xp
         ''', (user_id, total_xp))
-        self.ldb_cursor.execute('''
-            INSERT INTO user_levels (guild_id, user_id, level)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (user_id)
-            DO UPDATE SET level = EXCLUDED.level
-        ''', (guild_id, user_id, new_level))
         self.ldb_connection.commit()
 
-        # Send level-up message if the user leveled up
+        # Check if the user leveled up
         self.ldb_cursor.execute('SELECT level FROM user_levels WHERE user_id = %s', (user_id,))
-        current_level = self.ldb_cursor.fetchone()[0]
+        current_level = self.ldb_cursor.fetchone()[0] if self.ldb_cursor.rowcount > 0 else 0
         if new_level > current_level:
+            # Update the user's level in the database
+            self.ldb_cursor.execute('''
+                INSERT INTO user_levels (guild_id, user_id, level)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (user_id)
+                DO UPDATE SET level = EXCLUDED.level
+            ''', (guild_id, user_id, new_level))
+            self.ldb_connection.commit()
+
+            # Send level-up message if the user leveled up
             await self.send_level_up_message(guild_id, user_id, level=new_level)
+
 
 
 
