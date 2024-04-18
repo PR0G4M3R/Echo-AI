@@ -122,57 +122,56 @@ class levelModule(commands.Cog):
         self.ldb_cursor.execute('SELECT xp FROM user_xp WHERE user_id = %s', (user_id,))
         xp_row = self.ldb_cursor.fetchone()
         total_xp = xp_row[0] if xp_row else 0
+
+        # Calculate the new total XP
         total_xp += xp_increment
+
+        # Calculate the new level based on total XP
         new_level = total_xp // 10  # Assuming 10 XP is needed per level
 
-        # Update the user's level in the database
-        self.ldb_cursor.execute('''
-            INSERT INTO user_levels (user_id, level)
-            VALUES (%s, %s)
-            ON CONFLICT (user_id)
-            DO UPDATE SET level = EXCLUDED.level
-        ''', (user_id, new_level))
-        self.ldb_connection.commit()
-
-        # Check if the user leveled up
+        # Check if the new level is higher than the current level
         self.ldb_cursor.execute('SELECT level FROM user_levels WHERE user_id = %s', (user_id,))
-        current_level = self.ldb_cursor.fetchone()[0] if self.ldb_cursor.rowcount > 0 else 0
+        current_level_row = self.ldb_cursor.fetchone()
+        current_level = current_level_row[0] if current_level_row else 0
+
         if new_level > current_level:
-            guild = ctx.guild
-            print("first check passed")
-            # Send level-up message if the user leveled up
-            await self.send_level_up_message(guild, user_id, level=new_level)
-        else:
-            print(new_level)
-            print(current_level)
+            # Update the user's level in the database
+            self.ldb_cursor.execute('''
+                INSERT INTO user_levels (user_id, level)
+                VALUES (%s, %s)
+                ON CONFLICT (user_id)
+                DO UPDATE SET level = EXCLUDED.level
+            ''', (user_id, new_level))
+            self.ldb_connection.commit()
 
+            # Send level-up message
+            guild_id = ctx.guild.id
+            await self.send_level_up_message(guild_id, user_id, new_level)
 
-    async def send_level_up_message(self, guild, user_id, level):
-        print("second check passed")
+    async def send_level_up_message(self, guild_id, user_id, new_level):
         # Fetch the user object
         user = await self.bot.fetch_user(user_id)
         if user:
-            print("third check passed")
             # Fetch the level-up channel ID from the database for the guild
-            self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (guild.id,))
+            self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (guild_id,))
             row = self.ldb_cursor.fetchone()
             if row:
-                print("fourth check passed")
                 channel_id = row[0]
                 # Get the channel object using the channel ID
-                channel = guild.get_channel(channel_id)
+                channel = self.bot.get_channel(channel_id)
                 if channel:
                     # Send the level-up message to the designated channel
-                    await channel.send(f"Congratulations <@{user_id}>! You've reached level {level}!")
+                    await channel.send(f"Congratulations <@{user_id}>! You've reached level {new_level}!")
                 else:
                     # No level-up channel found
-                    await guild.owner.send(f"No level-up channel found for guild {guild.name}.")
+                    print(f"No level-up channel found for guild {guild_id}.")
             else:
                 # No level-up channel defined for the guild
-                print(f"No level-up channel defined for guild {guild.id}.")
+                print(f"No level-up channel defined for guild {guild_id}.")
         else:
             # User not found
             print(f"User with ID {user_id} not found.")
+
 
 
 
