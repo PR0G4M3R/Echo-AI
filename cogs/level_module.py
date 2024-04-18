@@ -127,23 +127,27 @@ class levelModule(commands.Cog):
             # Calculate total XP including new XP earned
             total_xp = current_xp + xp
             # Calculate the new level based on the total XP (your logic may vary)
-            new_level = 0
+            new_level = 1
             required_xp = 0
             while required_xp <= total_xp:
                 new_level += 1
-                required_xp += 10 + 5 * (new_level - 1)  # Each level requires 10 XP + 5 more than the last
+                required_xp = 10 + 5 * (new_level - 1)  # Each level requires 10 XP + 5 more than the last
             new_level -= 1  # Adjust for overshooting
             # Update the user's XP in the database
             self.ldb_cursor.execute('''
                 UPDATE user_xp SET xp = %s WHERE user_id = %s
             ''', (total_xp, user_id))
+            # Check if the user leveled up
+            if new_level > (current_xp // 10):
+                # Send level-up message if the user leveled up
+                await self.send_level_up_message(guild_id, user_id, level=new_level)
         else:
             # User has no XP data, insert initial XP
             self.ldb_cursor.execute('''
                 INSERT INTO user_xp (user_id, xp) VALUES (%s, %s)
             ''', (user_id, xp))
             new_level = 1  # Start at level 1
-            required_xp = 10 + 1 * (new_level - 1)  # XP required for level 1
+            required_xp = 10 + 5 * (new_level - 1)  # XP required for level 1
         # Update the user's level in the database
         self.ldb_cursor.execute('''
             INSERT INTO user_levels (guild_id, user_id, level)
@@ -152,11 +156,6 @@ class levelModule(commands.Cog):
             DO UPDATE SET level = EXCLUDED.level
         ''', (guild_id, user_id, new_level))
         self.ldb_connection.commit()
-
-        # Check if the user leveled up
-        if new_level > (current_xp // 10):
-            # Send level-up message if the user leveled up
-            await self.send_level_up_message(guild_id, user_id, level=new_level)
 
 
 
