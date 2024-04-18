@@ -118,15 +118,24 @@ class levelModule(commands.Cog):
 
 
     async def update_level(self, guild_id, user_id, xp_increment):
-        # Retrieve the user's current level
-        self.ldb_cursor.execute('SELECT level FROM user_levels WHERE user_id = %s', (user_id,))
-        level_row = self.ldb_cursor.fetchone()
-        current_level = level_row[0] if level_row else 0
+        # Retrieve the user's current XP
+        self.ldb_cursor.execute('SELECT xp FROM user_xp WHERE user_id = %s', (user_id,))
+        xp_row = self.ldb_cursor.fetchone()
+        total_xp = xp_row[0] if xp_row else 0
 
-        # Calculate the new level based on the XP increment
-        new_level = current_level + xp_increment // 10  # Assuming 10 XP is needed per level
+        # Calculate the new total XP
+        total_xp += xp_increment
 
-        # Update the user's level in the database
+        # Calculate the new level based on total XP
+        new_level = total_xp // 10  # Assuming 10 XP is needed per level
+
+        # Update the user's XP and level in the database
+        self.ldb_cursor.execute('''
+            INSERT INTO user_xp (user_id, xp)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id)
+            DO UPDATE SET xp = EXCLUDED.xp
+        ''', (user_id, total_xp))
         self.ldb_cursor.execute('''
             INSERT INTO user_levels (guild_id, user_id, level)
             VALUES (%s, %s, %s)
@@ -136,6 +145,8 @@ class levelModule(commands.Cog):
         self.ldb_connection.commit()
 
         # Send level-up message if the user leveled up
+        self.ldb_cursor.execute('SELECT level FROM user_levels WHERE user_id = %s', (user_id,))
+        current_level = self.ldb_cursor.fetchone()[0]
         if new_level > current_level:
             await self.send_level_up_message(guild_id, user_id, level=new_level)
 
@@ -213,7 +224,7 @@ class levelModule(commands.Cog):
             guild_id = message.guild.id
             # Get the level of the user who sent the message
             user = message.author
-            level = await self.get_level(user.id)
+            #level = await self.get_level(user.id)
             # Call your method to update user XP by 1 and pass the guild ID
             await self.update_user_xp(guild_id, user.id, 1)
            # await self.update_level(guild_id, user.id, level)
