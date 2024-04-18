@@ -106,14 +106,15 @@ class levelModule(commands.Cog):
         self.ldb_connection.commit()
         await self.update_level(guild_id, user_id, xp_increment)
 
-    async def get_level(self, guild_id, user_id):
+    async def get_level(self, user_id):
         # Retrieve the previous level from the database for the given guild and user
         self.ldb_cursor.execute('''
-            SELECT level FROM user_levels WHERE guild_id = %s AND user_id = %s
-        ''', (guild_id, user_id))
+            SELECT level FROM user_levels WHERE user_id = %s
+        ''', (user_id))
         level_row = self.ldb_cursor.fetchone()
         prev_level = level_row[0] if level_row else 0
         return prev_level
+
 
 
     async def update_level(self, guild_id, user_id, xp):
@@ -200,9 +201,8 @@ class levelModule(commands.Cog):
     @commands.command()
     async def view_level(self, ctx, user: discord.Member = None):
         user = user or ctx.author
-        guild_id = ctx.guild.id
         user_id = user.id
-        level = await self.get_level(guild_id, user_id) 
+        level = await self.get_level(user_id) 
         await ctx.send(f"{user.display_name} is at level {level}.")
 
     @commands.command()
@@ -224,7 +224,6 @@ class levelModule(commands.Cog):
             # User does not have staff roles, deny the command
             await ctx.send("You do not have permission to set the level up channel.")
 
-#New
     @commands.Cog.listener()
     async def on_message(self, message):
         if not message.author.bot:
