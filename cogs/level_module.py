@@ -110,10 +110,10 @@ class levelModule(commands.Cog):
         # Retrieve the previous level from the database for the given guild and user
         self.ldb_cursor.execute('''
             SELECT level FROM user_levels WHERE user_id = %s
-        ''', (user_id))
+        ''', (user_id,))
         level_row = self.ldb_cursor.fetchone()
         prev_level = level_row[0] if level_row else 0
-        return prev_level
+        return int(prev_level)
 
 
 
@@ -231,7 +231,7 @@ class levelModule(commands.Cog):
             guild_id = message.guild.id
             # Get the level of the user who sent the message
             user = message.author
-            level = await self.get_level(guild_id, user.id)
+            level = await self.get_level(user.id)
             # Call your method to update user XP by 1 and pass the guild ID
             await self.update_user_xp(guild_id, user.id, 1)
             await self.update_level(guild_id, user.id, level)
