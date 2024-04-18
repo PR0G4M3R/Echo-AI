@@ -17,4 +17,4 @@ class messageModule(commands.Cog):
             await message.delete()
            
 async def setup(bot):
-    bot.add_cog(messageModule(bot))
+    await bot.add_cog(messageModule(bot))

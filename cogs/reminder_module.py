@@ -138,5 +138,5 @@ class reminderModule(commands.Cog):
         self.db_conn.commit()
         await ctx.send('Reminder edited.')
 
-def setup(bot):
-    bot.add_cog(reminderModule(bot))
+async def setup(bot):
+    await bot.add_cog(reminderModule(bot))

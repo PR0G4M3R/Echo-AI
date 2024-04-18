@@ -356,5 +356,5 @@ class ModerationModule(commands.Cog):
         else:
             await ctx.send("You do not have permission to set the log channel.")
 
-def setup(bot):
-    bot.add_cog(ModerationModule(bot))
+async def setup(bot):
+    await bot.add_cog(ModerationModule(bot))

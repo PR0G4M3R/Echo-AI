@@ -253,5 +253,5 @@ class levelModule(commands.Cog):
         await self.initialize_user_xp(member.id)
 
 
-def setup(bot):
-    bot.add_cog(levelModule(bot))
+async def setup(bot):
+    await bot.add_cog(levelModule(bot))

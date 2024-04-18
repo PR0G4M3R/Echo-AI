@@ -375,6 +375,6 @@ class memberModule(commands.Cog):
         await ctx.send(embed=embed)
         conn.close()
 
-def setup(bot):
-    bot.add_cog(memberModule(bot))
+async def setup(bot):
+    await bot.add_cog(memberModule(bot))
     

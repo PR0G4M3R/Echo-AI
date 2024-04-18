@@ -87,5 +87,5 @@ class weatherModule(commands.Cog):
         else:
             await ctx.send("Location module is not enabled in the config.")
 
-def setup(bot):
-    bot.add_cog(weatherModule(bot))
+async def setup(bot):
+    await bot.add_cog(weatherModule(bot))
