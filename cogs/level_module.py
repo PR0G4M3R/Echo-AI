@@ -142,8 +142,9 @@ class levelModule(commands.Cog):
         self.ldb_cursor.execute('SELECT level FROM user_levels WHERE user_id = %s', (user_id,))
         current_level = self.ldb_cursor.fetchone()[0] if self.ldb_cursor.rowcount > 0 else 0
         if new_level > current_level:
+            guild = ctx.guild
             # Send level-up message if the user leveled up
-            await self.send_level_up_message(user_id, level=new_level)
+            await self.send_level_up_message(guild, user_id, level=new_level)
 
 
     async def send_level_up_message(self, guild, user_id, level):
