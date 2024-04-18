@@ -126,11 +126,16 @@ class memberModule(commands.Cog):
 
         # Store the fetched data in instance variables
         for row in rows:
-            guild_id, welcome_channel_id, dm_enabled, custom_thumbnail_url, custom_image_url, use_embed = row
+            guild_id, welcome_channel_id, dm_enabled, custom_thumbnail_url, custom_image_url, use_embed = row     
+            
+            if welcome_channel_id == 0:
+               welcome_channel_id = None
+           
+            welcome_channel_id = welcome_channel_id if welcome_channel_id !=0 else None
             self.dm_enabled = dm_enabled
             self.custom_thumbnail_url = custom_thumbnail_url
             self.custom_image_url = custom_image_url
-            self.use_embed = bool(use_embed)
+            self.use_embed = bool(use_embed)  
 
             # Update the welcome channel for the guild
             if welcome_channel_id is not None:
