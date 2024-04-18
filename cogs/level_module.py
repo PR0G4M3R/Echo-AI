@@ -95,7 +95,7 @@ class levelModule(commands.Cog):
         ''')
         self.ldb_connection.commit()
 
-    async def update_user_xp(self, guild_id, user_id, xp_increment):
+    async def update_user_xp(self, user_id, xp_increment):
         # Update user's XP in the leveling database
         self.ldb_cursor.execute('''
             INSERT INTO user_xp (user_id, xp)
@@ -104,7 +104,7 @@ class levelModule(commands.Cog):
             DO UPDATE SET xp = user_xp.xp + EXCLUDED.xp
         ''', (user_id, xp_increment))
         self.ldb_connection.commit()
-        await self.update_level(guild_id, user_id, xp_increment)
+        await self.update_level(user_id, xp_increment)
 
     async def get_level(self, user_id):
         # Retrieve the previous level from the database for the given guild and user
@@ -117,7 +117,7 @@ class levelModule(commands.Cog):
 
 
 
-    async def update_level(self, guild_id, user_id, xp_increment):
+    async def update_level(self, user_id, xp_increment):
         # Retrieve the user's current XP
         self.ldb_cursor.execute('SELECT xp FROM user_xp WHERE user_id = %s', (user_id,))
         xp_row = self.ldb_cursor.fetchone()
@@ -129,30 +129,21 @@ class levelModule(commands.Cog):
         # Calculate the new level based on total XP
         new_level = total_xp // 10  # Assuming 10 XP is needed per level
 
-        # Update the user's XP in the database
+        # Update the user's level in the database
         self.ldb_cursor.execute('''
-            INSERT INTO user_xp (user_id, xp)
+            INSERT INTO user_levels (user_id, level)
             VALUES (%s, %s)
             ON CONFLICT (user_id)
-            DO UPDATE SET xp = EXCLUDED.xp
-        ''', (user_id, total_xp))
+            DO UPDATE SET level = EXCLUDED.level
+        ''', (user_id, new_level))
         self.ldb_connection.commit()
 
         # Check if the user leveled up
         self.ldb_cursor.execute('SELECT level FROM user_levels WHERE user_id = %s', (user_id,))
         current_level = self.ldb_cursor.fetchone()[0] if self.ldb_cursor.rowcount > 0 else 0
         if new_level > current_level:
-            # Update the user's level in the database
-            self.ldb_cursor.execute('''
-                INSERT INTO user_levels (guild_id, user_id, level)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (user_id)
-                DO UPDATE SET level = EXCLUDED.level
-            ''', (guild_id, user_id, new_level))
-            self.ldb_connection.commit()
-
             # Send level-up message if the user leveled up
-            await self.send_level_up_message(guild_id, user_id, level=new_level)
+            await self.send_level_up_message(user_id, level=new_level)
 
 
 
@@ -225,14 +216,13 @@ class levelModule(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         if not message.author.bot:
-            # Get the guild ID
-            guild_id = message.guild.id
-            # Get the level of the user who sent the message
+            # Get the user who sent the message
             user = message.author
-            level = await self.get_level(user.id)
-            # Call your method to update user XP by 1 and pass the guild ID
-            await self.update_user_xp(guild_id, user.id, 1)
-            await self.update_level(guild_id, user.id, level)
+            # Update user XP by 1
+            await self.update_user_xp(user.id, 1)
+            # Call the method to update the user's level with the XP increment
+            await self.update_level(user.id, 1)
+
 
     async def initialize_user_xp(self, user_id):
         # Insert the user's ID and XP of zero into the database
@@ -249,6 +239,18 @@ class levelModule(commands.Cog):
     async def on_member_join(self, member):
         # Call the function to initialize the user's XP to zero
         await self.initialize_user_xp(member.id)
+
+
+    @commands.command(name='debug3', hidden=True)
+    @commands.is_owner()
+    async def remove_guild_id_column(self, ctx):
+        # Execute the SQL command to remove the guild_id column
+        try:
+            self.ldb_cursor.execute('ALTER TABLE user_levels DROP COLUMN guild_id;')
+            self.ldb_connection.commit()
+            await ctx.send('Guild ID column removed successfully.')
+        except Exception as e:
+            await ctx.send(f'An error occurred: {e}')
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
