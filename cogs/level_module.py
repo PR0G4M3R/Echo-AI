@@ -236,7 +236,7 @@ class levelModule(commands.Cog):
             await self.update_user_xp(ctx, user.id, 1)
             # Call the method to update the user's level with the XP increment
             await self.update_level(ctx, user.id, 1)
-            
+
 
 
 
