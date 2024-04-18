@@ -139,8 +139,8 @@ class memberModule(commands.Cog):
 
             # Update the welcome channel for the guild
             if welcome_channel_id is not None:
-                self.bot.get_guild(guild_id).welcome_channel_id = welcome_channel_id
-
+                self.server_settings[guild_id]['welcome_channel_id'] = welcome_channel_id
+                
         conn.close()
 
     def save_server_settings(self):
