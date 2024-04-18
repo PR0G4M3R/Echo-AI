@@ -149,20 +149,15 @@ class levelModule(commands.Cog):
 
 
 
-    async def send_level_up_message(self, guild_id, user_id, level):
-    # Fetch the level-up channel ID from the database
-        self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (guild_id,))
-        row = self.ldb_cursor.fetchone()
-        if row:
-            channel_id = row[0]
-            # Get the channel object using the channel ID
-            channel = self.bot.get_channel(channel_id)
-            if channel:
-                # Send the level-up message to the designated channel
-                await channel.send(f"Congratulations <@{user_id}>! You've reached level {level}!")
+    async def send_level_up_message(self, user_id, level):
+        # Get the user object using the user ID
+        user = self.bot.get_user(user_id)
+        if user:
+            # Send the level-up message directly to the user
+            await user.send(f"Congratulations! You've reached level {level}!")
         else:
-            # No level-up channel defined for the guild
-            print(f"No level-up channel defined for guild {guild_id}.")
+            # User not found
+            print(f"User with ID {user_id} not found.")
 
     @commands.command()
     @is_staff()
@@ -240,17 +235,6 @@ class levelModule(commands.Cog):
         # Call the function to initialize the user's XP to zero
         await self.initialize_user_xp(member.id)
 
-
-    @commands.command(name='debug3', hidden=True)
-    @commands.is_owner()
-    async def remove_guild_id_column(self, ctx):
-        # Execute the SQL command to remove the guild_id column
-        try:
-            self.ldb_cursor.execute('ALTER TABLE user_levels DROP COLUMN guild_id;')
-            self.ldb_connection.commit()
-            await ctx.send('Guild ID column removed successfully.')
-        except Exception as e:
-            await ctx.send(f'An error occurred: {e}')
 
 def setup(bot):
     bot.add_cog(levelModule(bot))
