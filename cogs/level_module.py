@@ -148,34 +148,31 @@ class levelModule(commands.Cog):
 
 
     async def send_level_up_message(self, ctx, user_id, level):
-        try:
-            print("second check passed")
-            # Fetch the user object
-            user = await self.bot.fetch_user(user_id)
-            if user:
-                print("third check passed")
-                # Fetch the level-up channel ID from the database for the guild
-                self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (ctx.guild.id,))
-                row = self.ldb_cursor.fetchone()
-                if row:
-                    print("fourth check passed")
-                    channel_id = row[0]
-                    # Get the channel object using the channel ID
-                    channel = ctx.guild.get_channel(channel_id)
-                    if channel:
-                        # Send the level-up message to the designated channel
-                        await channel.send(f"Congratulations <@{user_id}>! You've reached level {level}!")
-                    else:
-                        # No level-up channel found
-                        await ctx.send(f"No level-up channel found for this guild.")
+        print("second check passed")
+        # Fetch the user object
+        user = await self.bot.fetch_user(user_id)
+        if user:
+            print("third check passed")
+            # Fetch the level-up channel ID from the database for the guild
+            self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (ctx.guild.id,))
+            row = self.ldb_cursor.fetchone()
+            if row:
+                print("fourth check passed")
+                channel_id = row[0]
+                # Get the channel object using the channel ID
+                channel = ctx.guild.get_channel(channel_id)
+                if channel:
+                    # Send the level-up message to the designated channel
+                    await channel.send(f"Congratulations <@{user_id}>! You've reached level {level}!")
                 else:
-                    # No level-up channel defined for the guild
-                    print(f"No level-up channel defined for this guild.")
+                    # No level-up channel found
+                    await ctx.send(f"No level-up channel found for this guild.")
             else:
-                # User not found
-                print(f"User with ID {user_id} not found.")
-        except Exception as e:
-            print(f"Error sending level-up message: {e}")
+                # No level-up channel defined for the guild
+                print(f"No level-up channel defined for this guild.")
+        else:
+            # User not found
+            print(f"User with ID {user_id} not found.")
 
 
 
