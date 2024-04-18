@@ -162,6 +162,9 @@ class levelModule(commands.Cog):
                     if channel:
                         # Send the level-up message to the designated channel
                         await channel.send(f"Congratulations <@{user_id}>! You've reached level {level}!")
+                    else:
+                        # No level-up channel found
+                        print(f"No level-up channel found for guild {guild.id}.")
                 else:
                     # No level-up channel defined for the guild
                     print(f"No level-up channel defined for guild {guild.id}.")
