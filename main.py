@@ -6,7 +6,7 @@ from itertools import cycle
 import asyncio
 import cogs
 from cogs.message_module import messageModule
-from cogs.member_module import memberModule, create_database
+from cogs.member_module import memberModule
 from cogs.weather_module import weatherModule
 from cogs.channel_module import channelModule
 from cogs.help_module import HelpModule
