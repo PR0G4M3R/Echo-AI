@@ -141,6 +141,8 @@ class levelModule(commands.Cog):
         # Check if the user leveled up
         self.ldb_cursor.execute('SELECT level FROM user_levels WHERE user_id = %s', (user_id,))
         current_level = self.ldb_cursor.fetchone()[0] if self.ldb_cursor.rowcount > 0 else 0
+        print(new_level)
+        print(current_level)
         if new_level > current_level:
             print("first check passed")
             # Send level-up message if the user leveled up
