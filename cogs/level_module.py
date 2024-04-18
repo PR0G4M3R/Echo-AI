@@ -201,7 +201,8 @@ class levelModule(commands.Cog):
     async def view_level(self, ctx, user: discord.Member = None):
         user = user or ctx.author
         guild_id = ctx.guild.id
-        level = await self.get_level(user.id)
+        user_id = user.id
+        level = await self.get_level(guild_id, user_id) 
         await ctx.send(f"{user.display_name} is at level {level}.")
 
     @commands.command()
