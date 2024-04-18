@@ -150,14 +150,32 @@ class levelModule(commands.Cog):
 
 
     async def send_level_up_message(self, user_id, level):
-        # Get the user object using the user ID
+        # Fetch the user object
         user = self.bot.get_user(user_id)
         if user:
-            # Send the level-up message directly to the user
-            await user.send(f"Congratulations! You've reached level {level}!")
+            # Fetch the guild object from the user
+            guild = user.guild
+            if guild:
+                # Fetch the level-up channel ID from the database for the guild
+                self.ldb_cursor.execute('SELECT channel_id FROM levelup_channels WHERE guild_id = %s', (guild.id,))
+                row = self.ldb_cursor.fetchone()
+                if row:
+                    channel_id = row[0]
+                    # Get the channel object using the channel ID
+                    channel = self.bot.get_channel(channel_id)
+                    if channel:
+                        # Send the level-up message to the designated channel
+                        await channel.send(f"Congratulations <@{user_id}>! You've reached level {level}!")
+                else:
+                    # No level-up channel defined for the guild
+                    print(f"No level-up channel defined for guild {guild.id}.")
+            else:
+                # The guild object is not available
+                print(f"Guild not found for user {user_id}.")
         else:
             # User not found
             print(f"User with ID {user_id} not found.")
+
 
     @commands.command()
     @is_staff()
