@@ -224,10 +224,10 @@ class levelModule(commands.Cog):
             guild_id = message.guild.id
             # Get the level of the user who sent the message
             user = message.author
-            #level = await self.get_level(user.id)
+            level = await self.get_level(user.id)
             # Call your method to update user XP by 1 and pass the guild ID
             await self.update_user_xp(guild_id, user.id, 1)
-           # await self.update_level(guild_id, user.id, level)
+            await self.update_level(guild_id, user.id, level)
 
     async def initialize_user_xp(self, user_id):
         # Insert the user's ID and XP of zero into the database
