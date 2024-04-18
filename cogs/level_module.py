@@ -226,14 +226,17 @@ class levelModule(commands.Cog):
             await ctx.send("You do not have permission to set the level up channel.")
 
     @commands.Cog.listener()
-    async def on_message(self, message, ctx):
+    async def on_message(self, message):
         if not message.author.bot:
+            # Get the context from the message
+            ctx = await self.bot.get_context(message)
             # Get the user who sent the message
             user = message.author
             # Update user XP by 1
             await self.update_user_xp(ctx, user.id, 1)
             # Call the method to update the user's level with the XP increment
             await self.update_level(ctx, user.id, 1)
+
 
 
     async def initialize_user_xp(self, user_id):
