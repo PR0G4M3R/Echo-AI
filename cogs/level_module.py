@@ -117,37 +117,15 @@ class levelModule(commands.Cog):
 
 
 
-    async def update_level(self, guild_id, user_id, xp):
-        # Check if user already has XP data
-        self.ldb_cursor.execute('SELECT xp FROM user_xp WHERE user_id = %s', (user_id,))
-        row = self.ldb_cursor.fetchone()
-        if row:
-            # User already has XP data
-            current_xp = row[0]
-            # Calculate total XP including new XP earned
-            total_xp = current_xp + xp
-            # Calculate the new level based on the total XP (your logic may vary)
-            new_level = 1
-            required_xp = 0
-            while required_xp <= total_xp:
-                new_level += 1
-                required_xp = 10 + 5 * (new_level - 1)  # Each level requires 10 XP + 5 more than the last
-            new_level -= 1  # Adjust for overshooting
-            # Update the user's XP in the database
-            self.ldb_cursor.execute('''
-                UPDATE user_xp SET xp = %s WHERE user_id = %s
-            ''', (total_xp, user_id))
-            # Check if the user leveled up
-            if new_level > (current_xp // 10):
-                # Send level-up message if the user leveled up
-                await self.send_level_up_message(guild_id, user_id, level=new_level)
-        else:
-            # User has no XP data, insert initial XP
-            self.ldb_cursor.execute('''
-                INSERT INTO user_xp (user_id, xp) VALUES (%s, %s)
-            ''', (user_id, xp))
-            new_level = 1  # Start at level 1
-            required_xp = 10 + 5 * (new_level - 1)  # XP required for level 1
+    async def update_level(self, guild_id, user_id, xp_increment):
+        # Retrieve the user's current level
+        self.ldb_cursor.execute('SELECT level FROM user_levels WHERE user_id = %s', (user_id,))
+        level_row = self.ldb_cursor.fetchone()
+        current_level = level_row[0] if level_row else 0
+
+        # Calculate the new level based on the XP increment
+        new_level = current_level + xp_increment // 10  # Assuming 10 XP is needed per level
+
         # Update the user's level in the database
         self.ldb_cursor.execute('''
             INSERT INTO user_levels (guild_id, user_id, level)
@@ -156,6 +134,11 @@ class levelModule(commands.Cog):
             DO UPDATE SET level = EXCLUDED.level
         ''', (guild_id, user_id, new_level))
         self.ldb_connection.commit()
+
+        # Send level-up message if the user leveled up
+        if new_level > current_level:
+            await self.send_level_up_message(guild_id, user_id, level=new_level)
+
 
 
 
