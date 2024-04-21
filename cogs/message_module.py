@@ -12,7 +12,7 @@ class messageModule(commands.Cog):
           await self.filter_message(message)
 
     async def filter_message(self, message):
-        filter_words = ("HCDV887", "nigger" , "nigga" , "nig" , "nigg" , "nigg3r" , "nigg4" , "nigg" , "pervert" , "perv" , "perv3r" , "perv4r" , "perv5" , "perv6" , "perv7")  
+        filter_words = ("HCDV887", "nigger" , "nigga" , "nigg" , "nigg3r" , "nigg4" , "nigg" , "pervert" , "perv" , "perv3r" , "perv4r" , "perv5" , "perv6" , "perv7", "retard", "r3t4rd", "slut" "slu7", "whore", "wh0r3")  
         if any(word in message.content for word in filter_words):
             await message.delete()
            
