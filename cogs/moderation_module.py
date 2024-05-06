@@ -99,8 +99,6 @@ class ModerationModule(commands.Cog):
                     role_4 BIGINT,
                     role_5 BIGINT
                 );
-                ALTER TABLE member_roles
-                ADD CONSTRAINT unique_guild_member UNIQUE (guild_id, member_id);
             ''')
             self.connection.commit()
         except psycopg2.Error as e:
@@ -246,7 +244,7 @@ class ModerationModule(commands.Cog):
 
                 await asyncio.sleep(seconds)
                 # Retrieve member's roles from database
-                stored_roles = self.get_stored_roles(ctx.guild.id, member.id)
+                stored_roles = await self.get_stored_roles(ctx.guild.id, member.id)
                 if stored_roles:
                     await member.edit(roles=stored_roles)
                     await ctx.send(f"{member.mention} has been unmuted after {duration}.")
@@ -273,7 +271,7 @@ class ModerationModule(commands.Cog):
             return
 
         # Restore the member's roles
-        stored_roles = self.get_stored_roles(ctx.guild.id, member.id)
+        stored_roles = await self.get_stored_roles(ctx.guild.id, member.id)
         if stored_roles:
             await member.edit(roles=stored_roles)
             await ctx.send(f"{member.mention} has been unmuted.")
