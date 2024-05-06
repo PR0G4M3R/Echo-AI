@@ -234,6 +234,7 @@ class ModerationModule(commands.Cog):
         else:
             await ctx.send("An unexpected error occurred. Please try again later.")
     
+    #Mute
     @commands.command(brief="Mute members", name="mute")
     @is_staff()
     async def mute(self, ctx, member: discord.Member = None, duration: str = None, *, reason: str = "No reason provided."):
@@ -252,7 +253,7 @@ class ModerationModule(commands.Cog):
             await member.edit(roles=[muted_role])
 
             await ctx.send(f"{member.mention} has been muted.")
-            await self.log_moderation_action(ctx.guild.id, "Mute", member.id, reason)  # Pass reason to log_moderation_action
+            await self.log_moderation_action(ctx.guild.id, ctx.author.id, member.id, "Mute", reason)  # Pass reason to log_moderation_action
 
             # Store the member's roles for restoration
             await self.store_member_roles(member, member_roles)
@@ -266,9 +267,9 @@ class ModerationModule(commands.Cog):
                 await asyncio.sleep(seconds)
                 await member.edit(roles=member_roles)
                 await ctx.send(f"{member.mention} has been unmuted after {duration}.")
-                await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Mute expired")
+                await self.log_moderation_action(ctx.guild.id, ctx.author.id, member.id, "Unmute", "Mute expired")
 
-    # Unmute command
+    #Unmute
     @commands.command(brief="Unmute members", name="unmute")
     @is_staff()
     async def unmute(self, ctx, member: discord.Member = None):
@@ -285,13 +286,14 @@ class ModerationModule(commands.Cog):
             await ctx.send(f"{member.mention} is not muted.")
             return
 
-        # Get the stored roles of the member
+        # Restore the member's roles
         stored_roles = await self.get_stored_roles(member)
-
-        await member.edit(roles=stored_roles)
-        await ctx.send(f"{member.mention} has been unmuted.")
-        await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Manual unmute")
-        w
+        if stored_roles:
+            await member.edit(roles=stored_roles)
+            await ctx.send(f"{member.mention} has been unmuted.")
+            await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Manual unmute")
+        else:
+            await ctx.send("Error: Could not retrieve stored roles for the member.")
 
     @commands.command(brief="Kick members", name="kick")
     @is_staff()
