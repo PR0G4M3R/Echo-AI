@@ -234,7 +234,6 @@ class ModerationModule(commands.Cog):
         else:
             await ctx.send("An unexpected error occurred. Please try again later.")
     
-    # Mute command
     @commands.command(brief="Mute members", name="mute")
     @is_staff()
     async def mute(self, ctx, member: discord.Member = None, duration: str = None, *, reason: str = "No reason provided."):
@@ -253,7 +252,10 @@ class ModerationModule(commands.Cog):
             await member.edit(roles=[muted_role])
 
             await ctx.send(f"{member.mention} has been muted.")
-            await self.log_moderation_action(ctx.guild.id, "Mute", member.id, reason)
+            await self.log_moderation_action(ctx.guild.id, "Mute", member.id, reason)  # Pass reason to log_moderation_action
+
+            # Store the member's roles for restoration
+            await self.store_member_roles(member, member_roles)
 
             if duration:
                 seconds = self.parse_duration(duration)
