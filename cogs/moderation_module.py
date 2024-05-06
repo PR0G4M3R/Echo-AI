@@ -99,6 +99,8 @@ class ModerationModule(commands.Cog):
                     role_4 BIGINT,
                     role_5 BIGINT
                 );
+                ALTER TABLE member_roles
+                ADD CONSTRAINT unique_guild_member UNIQUE (guild_id, member_id);
             ''')
             self.connection.commit()
         except psycopg2.Error as e:
@@ -121,7 +123,7 @@ class ModerationModule(commands.Cog):
         except psycopg2.Error as e:
             print("Error logging moderation action:", e)
             self.connection.rollback()  # Rollback transaction in case of error
-            
+
 
     @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
     @is_guild_owner()
@@ -378,4 +380,6 @@ class ModerationModule(commands.Cog):
             await ctx.send("You do not have permission to set the log channel.")
 
 async def setup(bot):
+    await create_tables()
     await bot.add_cog(ModerationModule(bot))
+    
