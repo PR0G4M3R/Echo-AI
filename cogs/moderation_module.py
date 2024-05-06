@@ -121,29 +121,7 @@ class ModerationModule(commands.Cog):
         except psycopg2.Error as e:
             print("Error logging moderation action:", e)
             self.connection.rollback()  # Rollback transaction in case of error
-
-    async def get_stored_roles(self, member):
-    # Connect to your database
-        self.cursor.execute("SELECT role_ids FROM member_roles WHERE member_id = %s AND guild_id = %s", (member.id, member.guild.id))
-        role_ids_record = self.cursor.fetchone()
-
-        if role_ids_record:
-            # Convert the role IDs stored in the database to discord.Role objects
-            role_ids = role_ids_record[0]  # Assuming 'role_ids' is stored as an array
-            roles = [member.guild.get_role(role_id) for role_id in role_ids if member.guild.get_role(role_id)]
-            return roles
-        else:
-            # Return an empty list if no roles are found
-            return []
-
-
-        # Function to execute SQL queries
-        def execute_query(self, query, values=None):
-            if values:
-                self.cursor.execute(query, values)
-            else:
-                self.cursor.execute(query)
-            self.connection.commit()
+            
 
     @commands.command(brief="Set the staff roles for the moderator commands.", name="setup_roles")
     @is_guild_owner()
@@ -248,15 +226,15 @@ class ModerationModule(commands.Cog):
                 await ctx.send("The 'Muted' role is not found. Make sure you have created the 'Muted' role.")
                 return
 
-            member_roles = member.roles[1:]  # Exclude the @everyone role
+            member_roles = [role.id for role in member.roles if role != muted_role]  # Exclude the 'Muted' role
+
+            # Store the member's roles before muting
+            self.store_member_roles(ctx.guild.id, member.id, member_roles)
 
             await member.edit(roles=[muted_role])
 
             await ctx.send(f"{member.mention} has been muted.")
             await self.log_moderation_action(ctx.guild.id, ctx.author.id, member.id, "Mute", reason)  # Pass reason to log_moderation_action
-
-            # Store the member's roles for restoration
-            await self.store_member_roles(member, member_roles)
 
             if duration:
                 seconds = self.parse_duration(duration)
@@ -265,9 +243,15 @@ class ModerationModule(commands.Cog):
                     return
 
                 await asyncio.sleep(seconds)
-                await member.edit(roles=member_roles)
-                await ctx.send(f"{member.mention} has been unmuted after {duration}.")
-                await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Mute expired")
+                # Retrieve member's roles from database
+                stored_roles = self.get_stored_roles(ctx.guild.id, member.id)
+                if stored_roles:
+                    await member.edit(roles=stored_roles)
+                    await ctx.send(f"{member.mention} has been unmuted after {duration}.")
+                    await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Mute expired")
+                else:
+                    await ctx.send("Error: Could not retrieve stored roles for the member.")
+
 
     #Unmute
     @commands.command(brief="Unmute members", name="unmute")
@@ -287,13 +271,43 @@ class ModerationModule(commands.Cog):
             return
 
         # Restore the member's roles
-        stored_roles = await self.get_stored_roles(member)
+        stored_roles = self.get_stored_roles(ctx.guild.id, member.id)
         if stored_roles:
             await member.edit(roles=stored_roles)
             await ctx.send(f"{member.mention} has been unmuted.")
             await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Manual unmute")
         else:
             await ctx.send("Error: Could not retrieve stored roles for the member.")
+
+    def store_member_roles(self, guild_id, member_id, roles):
+        try:
+            self.cursor.execute('''
+                INSERT INTO member_roles (guild_id, member_id, role_ids)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (guild_id, member_id) DO UPDATE
+                SET role_ids = EXCLUDED.role_ids;
+            ''', (guild_id, member_id, roles))
+            self.connection.commit()
+        except psycopg2.Error as e:
+            print("Error storing member roles:", e)
+            self.connection.rollback()
+
+    def get_stored_roles(self, guild_id, member_id):
+        try:
+            self.cursor.execute('''
+                SELECT role_ids
+                FROM member_roles
+                WHERE guild_id = %s AND member_id = %s;
+            ''', (guild_id, member_id))
+            result = self.cursor.fetchone()
+            if result:
+                return result[0]
+            else:
+                return None
+        except psycopg2.Error as e:
+            print("Error retrieving stored roles:", e)
+            return None
+
 
     @commands.command(brief="Kick members", name="kick")
     @is_staff()
