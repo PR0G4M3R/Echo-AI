@@ -265,6 +265,7 @@ class ModerationModule(commands.Cog):
                 await member.edit(roles=member_roles)
                 await ctx.send(f"{member.mention} has been unmuted after {duration}.")
                 await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Mute expired")
+
     # Unmute command
     @commands.command(brief="Unmute members", name="unmute")
     @is_staff()
@@ -283,11 +284,12 @@ class ModerationModule(commands.Cog):
             return
 
         # Get the stored roles of the member
-        stored_roles = self.get_stored_roles(member)
+        stored_roles = await self.get_stored_roles(member)
 
         await member.edit(roles=stored_roles)
         await ctx.send(f"{member.mention} has been unmuted.")
         await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Manual unmute")
+        w
 
     @commands.command(brief="Kick members", name="kick")
     @is_staff()
