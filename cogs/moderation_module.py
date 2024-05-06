@@ -281,7 +281,7 @@ class ModerationModule(commands.Cog):
         else:
             await ctx.send("Error: Could not retrieve stored roles for the member.")
 
-    def store_member_roles(self, guild_id, member_id, roles):
+    async def store_member_roles(self, guild_id, member_id, roles):
         try:
             self.cursor.execute('''
                 INSERT INTO member_roles (guild_id, member_id, role_ids)
@@ -294,7 +294,7 @@ class ModerationModule(commands.Cog):
             print("Error storing member roles:", e)
             self.connection.rollback()
 
-    def get_stored_roles(self, guild_id, member_id):
+    async def get_stored_roles(self, guild_id, member_id):
         try:
             self.cursor.execute('''
                 SELECT role_ids
@@ -303,12 +303,16 @@ class ModerationModule(commands.Cog):
             ''', (guild_id, member_id))
             result = self.cursor.fetchone()
             if result:
-                return result[0]
+                role_ids = result[0]
+                guild = discord.utils.get(self.bot.guilds, id=guild_id)
+                roles = [discord.utils.get(guild.roles, id=role_id) for role_id in role_ids]
+                return roles
             else:
                 return None
         except psycopg2.Error as e:
             print("Error retrieving stored roles:", e)
             return None
+
 
 
     @commands.command(brief="Kick members", name="kick")
@@ -380,6 +384,5 @@ class ModerationModule(commands.Cog):
             await ctx.send("You do not have permission to set the log channel.")
 
 async def setup(bot):
-    await create_tables()
     await bot.add_cog(ModerationModule(bot))
     
