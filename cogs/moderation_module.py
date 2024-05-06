@@ -267,7 +267,7 @@ class ModerationModule(commands.Cog):
                 await asyncio.sleep(seconds)
                 await member.edit(roles=member_roles)
                 await ctx.send(f"{member.mention} has been unmuted after {duration}.")
-                await self.log_moderation_action(ctx.guild.id, ctx.author.id, member.id, "Unmute", "Mute expired")
+                await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Mute expired")
 
     #Unmute
     @commands.command(brief="Unmute members", name="unmute")
@@ -305,7 +305,8 @@ class ModerationModule(commands.Cog):
         try:
             await member.kick(reason=reason)
             await ctx.send(f"{member.mention} has been kicked.")
-            await self.log_moderation_action(ctx.guild.id, "Kick", member.id, reason)
+            await self.log_moderation_action(ctx.guild.id, ctx.author.id, member.id, "Kick", reason)
+
         except discord.Forbidden:
             await ctx.send("I don't have permission to kick members.")
         except discord.HTTPException:
