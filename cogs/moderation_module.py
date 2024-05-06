@@ -229,7 +229,7 @@ class ModerationModule(commands.Cog):
             member_roles = [role.id for role in member.roles if role != muted_role]  # Exclude the 'Muted' role
 
             # Store the member's roles before muting
-            self.store_member_roles(ctx.guild.id, member.id, member_roles)
+            await self.store_member_roles(ctx.guild.id, member.id, member_roles)
 
             await member.edit(roles=[muted_role])
 
@@ -275,7 +275,7 @@ class ModerationModule(commands.Cog):
         if stored_roles:
             await member.edit(roles=stored_roles)
             await ctx.send(f"{member.mention} has been unmuted.")
-            await self.log_moderation_action(ctx.guild.id, "Unmute", member.id, reason="Manual unmute")
+            await self.log_moderation_action(ctx.guild.id, ctx.author.id, member.id, "Unmute", reason="Manual unmute")
         else:
             await ctx.send("Error: Could not retrieve stored roles for the member.")
 
