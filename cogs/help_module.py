@@ -6,7 +6,6 @@ from cogs.channel_module import channelCommandInfo, CHANNEL_MODULE_COMMANDS
 from cogs.member_module import memberCommandInfo, MEMBER_MODULE_COMMANDS
 from cogs.moderation_module import moderationCommandInfo, MODERATION_MODULE_COMMANDS
 from cogs.reminder_module import reminderCommandInfo, REMINDER_MODULE_COMMANDS
-from cogs.weather_module import weatherCommandInfo, WEATHER_MODULE_COMMANDS
 from cogs.level_module import levelCommandInfo, LEVEL_MODULE_COMMANDS
 
 class HelpModule(commands.Cog):
@@ -27,8 +26,6 @@ class HelpModule(commands.Cog):
            # "Server Commands": [],
            # "Admin Commands": [],
            # "Reminders": [],
-           # "Location Commands": [],
-           # "Weather Commands": []
            # "Level Commands": []
         }
         
@@ -37,7 +34,6 @@ class HelpModule(commands.Cog):
         category_commands["Member Commands"] = MEMBER_MODULE_COMMANDS
         category_commands["Moderation Commands"] = MODERATION_MODULE_COMMANDS
         category_commands["Reminder Commands"] = REMINDER_MODULE_COMMANDS
-        category_commands["Weather Commands"] = WEATHER_MODULE_COMMANDS
         category_commands["Level Commands"] = LEVEL_MODULE_COMMANDS
         
         # Add commands to embed
