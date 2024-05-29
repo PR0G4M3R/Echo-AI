@@ -26,7 +26,6 @@ async def on_ready():
     print('Successfully logged in as {0.user}'.format(bot))
     await bot.add_cog(messageModule(bot))
     await bot.add_cog(memberModule(bot))
-    await bot.add_cog(weatherModule(bot))
     await bot.add_cog(channelModule(bot))
     await bot.add_cog(HelpModule(bot))
     await bot.add_cog(ModerationModule(bot))
