@@ -7,7 +7,6 @@ import asyncio
 import cogs
 from cogs.message_module import messageModule
 from cogs.member_module import memberModule
-from cogs.weather_module import weatherModule
 from cogs.channel_module import channelModule
 from cogs.help_module import HelpModule
 from cogs.moderation_module import ModerationModule
@@ -17,8 +16,8 @@ from cogs.level_module import levelModule
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="Echo_", intents=intents, case_insensitive=True) 
 status = variables = [
-discord.Game(name='StarMade'),
-discord.Activity(type=discord.ActivityType.listening, name='Spotify'),
+discord.Activity(type=discord.ActivityType.watching, name="you"),
+discord.Activity(type=discord.ActivityType.listening, name='to you.'),
 ]
 
 
@@ -33,8 +32,6 @@ async def on_ready():
     await bot.add_cog(ModerationModule(bot))
     await bot.add_cog(reminderModule(bot))
     await bot.add_cog(levelModule(bot))
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game('Starting...'))
-    await asyncio.sleep(5)
     status_cycle = cycle(variables)
     while True:
       current_status = next(status_cycle)
