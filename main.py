@@ -12,7 +12,7 @@ from cogs.help_module import HelpModule
 from cogs.moderation_module import ModerationModule
 from cogs.reminder_module import reminderModule
 from cogs.level_module import levelModule
-from keep_alive.py import keep_alive
+from keep_alive import keep_alive
 
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="Echo_", intents=intents, case_insensitive=True) 
